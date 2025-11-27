@@ -1,0 +1,98 @@
+<script type="text/javascript">
+    RED.nodes. registerType('scriptlauncher-server', {
+        category: 'config',
+        defaults: {
+            host: {value: "localhost", required: true},
+            port: {value: 8810, required: true, validate: RED.validators.number()}
+        },
+        credentials: {
+            password: {type: "password"}
+        },
+        label: function() {
+            return this.host + ":" + this.port;
+        }
+    });
+</script>
+
+<script type="text/x-red" data-template-name="scriptlauncher-server">
+    <div class="form-row">
+        <label for="node-config-input-host"><i class="fa fa-server"></i> Host</label>
+        <input type="text" id="node-config-input-host" placeholder="localhost">
+    </div>
+    <div class="form-row">
+        <label for="node-config-input-port"><i class="fa fa-plug"></i> Port</label>
+        <input type="text" id="node-config-input-port" placeholder="8810">
+    </div>
+    <div class="form-row">
+        <label for="node-config-input-password"><i class="fa fa-lock"></i> Password</label>
+        <input type="password" id="node-config-input-password">
+    </div>
+</script>
+
+<script type="text/javascript">
+    RED.nodes.registerType('scriptlauncher', {
+        category: 'system',
+        color: '#a6bbcf',
+        defaults: {
+            name: {value: ""},
+            server: {value: "", type: "scriptlauncher-server", required: true},
+            command: {value: "shutdown", required: true},
+            shutdownTime: {value: 1, validate: RED.validators.number()}
+        },
+        inputs: 1,
+        outputs: 1,
+        icon: "arrow-in. png",
+        label: function() {
+            return this.name || "scriptlauncher " + this.command;
+        }
+    });
+</script>
+
+<script type="text/x-red" data-template-name="scriptlauncher">
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+    <div class="form-row">
+        <label for="node-input-server"><i class="fa fa-server"></i> Server</label>
+        <input type="text" id="node-input-server">
+    </div>
+    <div class="form-row">
+        <label for="node-input-command"><i class="fa fa-terminal"></i> Command</label>
+        <select id="node-input-command">
+            <option value="shutdown">Shutdown</option>
+            <option value="reboot">Reboot</option>
+            <option value="shutdown_cancel">Cancel Shutdown</option>
+            <option value="lock">Lock</option>
+        </select>
+    </div>
+    <div class="form-row">
+        <label for="node-input-shutdownTime"><i class="fa fa-clock-o"></i> Shutdown Time (min)</label>
+        <input type="number" id="node-input-shutdownTime" placeholder="1">
+    </div>
+</script>
+
+<script type="text/x-red" data-help-name="scriptlauncher">
+    <p>Send system commands to ScriptLauncher. </p>
+    <h3>Inputs</h3>
+    <dl class="message-properties">
+        <dt class="optional">command <span class="property-type">string</span></dt>
+        <dd>Override the configured command (shutdown, reboot, shutdown_cancel, lock)</dd>
+        <dt class="optional">shutdownTime <span class="property-type">number</span></dt>
+        <dd>Override shutdown delay in minutes (only for shutdown command)</dd>
+    </dl>
+    <h3>Outputs</h3>
+    <dl class="message-properties">
+        <dt>payload <span class="property-type">string</span></dt>
+        <dd>The result message from ScriptLauncher</dd>
+    </dl>
+    <h3>Details</h3>
+    <p>This node connects to a ScriptLauncher instance via Socket.IO and sends system commands.</p>
+    <p>Supported commands:</p>
+    <ul>
+        <li><code>shutdown</code> - Shutdown the system after a delay (in minutes)</li>
+        <li><code>reboot</code> - Reboot the system immediately</li>
+        <li><code>shutdown_cancel</code> - Cancel a pending shutdown</li>
+        <li><code>lock</code> - Lock the user session</li>
+    </ul>
+</script>

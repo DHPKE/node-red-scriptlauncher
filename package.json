@@ -1,0 +1,26 @@
+{
+  "name": "node-red-contrib-scriptlauncher",
+  "version": "1.0. 0",
+  "description": "Node-RED node for controlling ScriptLauncher",
+  "main": "scriptlauncher.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "node-red",
+    "scriptlauncher",
+    "system",
+    "shutdown",
+    "reboot"
+  ],
+  "author": "DHPKE",
+  "license": "MIT",
+  "dependencies": {
+    "socket.io-client": "^4.5.0"
+  },
+  "node-red": {
+    "nodes": {
+      "scriptlauncher": "scriptlauncher.js"
+    }
+  }
+}
