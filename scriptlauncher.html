@@ -1,5 +1,5 @@
 <script type="text/javascript">
-    RED.nodes. registerType('scriptlauncher-server', {
+    RED.nodes.registerType('scriptlauncher-server', {
         category: 'config',
         defaults: {
             host: {value: "localhost", required: true},
@@ -41,7 +41,7 @@
         },
         inputs: 1,
         outputs: 1,
-        icon: "arrow-in. png",
+        icon: "arrow-in.png",
         label: function() {
             return this.name || "scriptlauncher " + this.command;
         }
