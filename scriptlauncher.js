@@ -107,7 +107,7 @@ module.exports = function(RED) {
                 
                 // Response timeout handler
                 const responseTimeoutId = setTimeout(function() {
-                    node.status({fill:"red", shape:"ring", text:"response timeout"});
+                    node.status({fill:"grey", shape:"square", text:"disconnect"});
                     node.error(`Response timeout: No response received for '${cmdToSend}' command within ${RESPONSE_TIMEOUT/1000} seconds`);
                     cleanupSocket(socket, timeoutIds);
                 }, RESPONSE_TIMEOUT);
