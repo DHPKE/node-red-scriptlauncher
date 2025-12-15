@@ -1,0 +1,681 @@
+-- ScriptLauncher Q-SYS Plugin
+-- Integrates with ScriptLauncher (https://github.com/josephdadams/ScriptLauncher)
+-- Provides comprehensive control over system, script, input, UI, file, and app commands
+
+PluginInfo = {
+  Name = "ScriptLauncher",
+  Version = "1.0.0",
+  BuildVersion = "1.0.0",
+  Id = "scriptlauncher.control.v1",
+  Author = "DHPKE",
+  Description = "Control ScriptLauncher system commands via REST API"
+}
+
+-- Define color for the plugin icon
+function GetColor(props)
+  return { 102, 102, 102 }
+end
+
+-- Define the plugin properties that appear in the Q-SYS Designer
+function GetProperties()
+  local props = {
+    {
+      Name = "Host",
+      Type = "string",
+      Value = "localhost"
+    },
+    {
+      Name = "Port",
+      Type = "integer",
+      Min = 1,
+      Max = 65535,
+      Value = 8810
+    }
+  }
+  return props
+end
+
+-- Define the plugin controls and pins
+function GetControls(props)
+  local ctrls = {
+    -- Connection Configuration
+    {
+      Name = "host",
+      ControlType = "Text",
+      Count = 1,
+      UserPin = true,
+      PinStyle = "Input"
+    },
+    {
+      Name = "port",
+      ControlType = "Text",
+      Count = 1,
+      UserPin = true,
+      PinStyle = "Input"
+    },
+    {
+      Name = "password",
+      ControlType = "Text",
+      Count = 1,
+      UserPin = true,
+      PinStyle = "Input"
+    },
+    
+    -- Command Selection
+    {
+      Name = "command",
+      ControlType = "Text",
+      Count = 1,
+      UserPin = true,
+      PinStyle = "Both"
+    },
+    
+    -- System Command Parameters
+    {
+      Name = "time",
+      ControlType = "Text",
+      Count = 1,
+      UserPin = true,
+      PinStyle = "Input"
+    },
+    
+    -- Script Command Parameters
+    {
+      Name = "executable",
+      ControlType = "Text",
+      Count = 1,
+      UserPin = true,
+      PinStyle = "Input"
+    },
+    {
+      Name = "args",
+      ControlType = "Text",
+      Count = 1,
+      UserPin = true,
+      PinStyle = "Input"
+    },
+    {
+      Name = "stdin",
+      ControlType = "Text",
+      Count = 1,
+      UserPin = true,
+      PinStyle = "Input"
+    },
+    
+    -- Input Command Parameters
+    {
+      Name = "inputType",
+      ControlType = "Text",
+      Count = 1,
+      UserPin = true,
+      PinStyle = "Input"
+    },
+    {
+      Name = "key",
+      ControlType = "Text",
+      Count = 1,
+      UserPin = true,
+      PinStyle = "Input"
+    },
+    
+    -- UI Command Parameters
+    {
+      Name = "message",
+      ControlType = "Text",
+      Count = 1,
+      UserPin = true,
+      PinStyle = "Input"
+    },
+    
+    -- File Command Parameters
+    {
+      Name = "sourcePath",
+      ControlType = "Text",
+      Count = 1,
+      UserPin = true,
+      PinStyle = "Input"
+    },
+    {
+      Name = "destPath",
+      ControlType = "Text",
+      Count = 1,
+      UserPin = true,
+      PinStyle = "Input"
+    },
+    {
+      Name = "sourceFolderPath",
+      ControlType = "Text",
+      Count = 1,
+      UserPin = true,
+      PinStyle = "Input"
+    },
+    {
+      Name = "destFolderPath",
+      ControlType = "Text",
+      Count = 1,
+      UserPin = true,
+      PinStyle = "Input"
+    },
+    {
+      Name = "newestOrOldest",
+      ControlType = "Text",
+      Count = 1,
+      UserPin = true,
+      PinStyle = "Input"
+    },
+    {
+      Name = "fileExtension",
+      ControlType = "Text",
+      Count = 1,
+      UserPin = true,
+      PinStyle = "Input"
+    },
+    {
+      Name = "fileName",
+      ControlType = "Text",
+      Count = 1,
+      UserPin = true,
+      PinStyle = "Input"
+    },
+    {
+      Name = "copyOnly",
+      ControlType = "Button",
+      ButtonType = "Toggle",
+      Count = 1,
+      UserPin = true,
+      PinStyle = "Input"
+    },
+    {
+      Name = "destFolderPathLarger",
+      ControlType = "Text",
+      Count = 1,
+      UserPin = true,
+      PinStyle = "Input"
+    },
+    {
+      Name = "destFolderPathSmaller",
+      ControlType = "Text",
+      Count = 1,
+      UserPin = true,
+      PinStyle = "Input"
+    },
+    {
+      Name = "sizeThreshold",
+      ControlType = "Text",
+      Count = 1,
+      UserPin = true,
+      PinStyle = "Input"
+    },
+    
+    -- App Command Parameters
+    {
+      Name = "appName",
+      ControlType = "Text",
+      Count = 1,
+      UserPin = true,
+      PinStyle = "Input"
+    },
+    
+    -- Trigger and Status
+    {
+      Name = "sendCommand",
+      ControlType = "Button",
+      ButtonType = "Trigger",
+      Count = 1,
+      UserPin = true,
+      PinStyle = "Input"
+    },
+    {
+      Name = "status",
+      ControlType = "Indicator",
+      IndicatorType = "Status",
+      Count = 1,
+      UserPin = true,
+      PinStyle = "Output"
+    },
+    {
+      Name = "statusText",
+      ControlType = "Text",
+      Count = 1,
+      UserPin = true,
+      PinStyle = "Output"
+    },
+    {
+      Name = "result",
+      ControlType = "Text",
+      Count = 1,
+      UserPin = true,
+      PinStyle = "Output"
+    }
+  }
+  return ctrls
+end
+
+-- Define the graphical layout of the plugin
+function GetControlLayout(props)
+  local layout = {}
+  local graphics = {}
+  
+  -- UI color constants
+  local BACKGROUND_COLOR = { 240, 240, 240 }
+  
+  -- Title
+  table.insert(graphics, {
+    Type = "GroupBox",
+    Fill = BACKGROUND_COLOR,
+    StrokeWidth = 1,
+    Position = { 0, 0 },
+    Size = { 400, 610 }
+  })
+  
+  table.insert(graphics, {
+    Type = "Text",
+    Text = "ScriptLauncher Control",
+    Position = { 10, 10 },
+    Size = { 380, 20 },
+    FontSize = 14,
+    HTextAlign = "Center"
+  })
+  
+  -- Connection Section
+  table.insert(graphics, {
+    Type = "Text",
+    Text = "Connection",
+    Position = { 10, 40 },
+    Size = { 380, 16 },
+    FontSize = 12,
+    HTextAlign = "Left"
+  })
+  
+  layout["host"] = {
+    PrettyName = "Host/IP Address",
+    Position = { 10, 60 },
+    Size = { 250, 20 }
+  }
+  
+  layout["port"] = {
+    PrettyName = "Port",
+    Position = { 270, 60 },
+    Size = { 120, 20 }
+  }
+  
+  layout["password"] = {
+    PrettyName = "Password",
+    Position = { 10, 90 },
+    Size = { 380, 20 }
+  }
+  
+  -- Command Section
+  table.insert(graphics, {
+    Type = "Text",
+    Text = "Command",
+    Position = { 10, 120 },
+    Size = { 380, 16 },
+    FontSize = 12,
+    HTextAlign = "Left"
+  })
+  
+  layout["command"] = {
+    PrettyName = "Command Type",
+    Position = { 10, 140 },
+    Size = { 380, 20 }
+  }
+  
+  -- Parameters Section
+  table.insert(graphics, {
+    Type = "Text",
+    Text = "Parameters",
+    Position = { 10, 170 },
+    Size = { 380, 16 },
+    FontSize = 12,
+    HTextAlign = "Left"
+  })
+  
+  -- System Parameters
+  layout["time"] = {
+    PrettyName = "Time (minutes)",
+    Position = { 10, 190 },
+    Size = { 120, 20 }
+  }
+  
+  -- Script Parameters
+  layout["executable"] = {
+    PrettyName = "Executable Path",
+    Position = { 10, 220 },
+    Size = { 380, 20 }
+  }
+  
+  layout["args"] = {
+    PrettyName = "Arguments",
+    Position = { 10, 250 },
+    Size = { 380, 20 }
+  }
+  
+  layout["stdin"] = {
+    PrettyName = "Stdin",
+    Position = { 10, 280 },
+    Size = { 380, 20 }
+  }
+  
+  -- Input Parameters
+  layout["inputType"] = {
+    PrettyName = "Input Type",
+    Position = { 10, 310 },
+    Size = { 180, 20 }
+  }
+  
+  layout["key"] = {
+    PrettyName = "Key/Button",
+    Position = { 200, 310 },
+    Size = { 190, 20 }
+  }
+  
+  -- UI Parameters
+  layout["message"] = {
+    PrettyName = "Message",
+    Position = { 10, 340 },
+    Size = { 380, 20 }
+  }
+  
+  -- File Parameters
+  layout["sourcePath"] = {
+    PrettyName = "Source Path",
+    Position = { 10, 370 },
+    Size = { 380, 20 }
+  }
+  
+  layout["destPath"] = {
+    PrettyName = "Destination Path",
+    Position = { 10, 400 },
+    Size = { 380, 20 }
+  }
+  
+  layout["sourceFolderPath"] = {
+    PrettyName = "Source Folder",
+    Position = { 10, 430 },
+    Size = { 190, 20 }
+  }
+  
+  layout["destFolderPath"] = {
+    PrettyName = "Dest Folder",
+    Position = { 200, 430 },
+    Size = { 190, 20 }
+  }
+  
+  layout["newestOrOldest"] = {
+    PrettyName = "Newest/Oldest",
+    Position = { 10, 460 },
+    Size = { 90, 20 }
+  }
+  
+  layout["fileExtension"] = {
+    PrettyName = "File Extension",
+    Position = { 110, 460 },
+    Size = { 90, 20 }
+  }
+  
+  layout["fileName"] = {
+    PrettyName = "File Name",
+    Position = { 210, 460 },
+    Size = { 90, 20 }
+  }
+  
+  layout["copyOnly"] = {
+    PrettyName = "Copy Only",
+    Position = { 310, 460 },
+    Size = { 80, 20 },
+    Legend = "Copy"
+  }
+  
+  layout["destFolderPathLarger"] = {
+    PrettyName = "Dest Larger",
+    Position = { 10, 490 },
+    Size = { 190, 20 }
+  }
+  
+  layout["destFolderPathSmaller"] = {
+    PrettyName = "Dest Smaller",
+    Position = { 200, 490 },
+    Size = { 190, 20 }
+  }
+  
+  layout["sizeThreshold"] = {
+    PrettyName = "Size Threshold",
+    Position = { 10, 520 },
+    Size = { 190, 20 }
+  }
+  
+  -- App Parameters
+  layout["appName"] = {
+    PrettyName = "App Name",
+    Position = { 210, 520 },
+    Size = { 180, 20 }
+  }
+  
+  -- Trigger and Status
+  layout["sendCommand"] = {
+    PrettyName = "Send Command",
+    Position = { 10, 550 },
+    Size = { 120, 24 },
+    Legend = "Send"
+  }
+  
+  layout["status"] = {
+    PrettyName = "Status",
+    Position = { 140, 550 },
+    Size = { 60, 24 }
+  }
+  
+  layout["statusText"] = {
+    PrettyName = "Status Text",
+    Position = { 210, 550 },
+    Size = { 180, 24 }
+  }
+  
+  layout["result"] = {
+    PrettyName = "Result",
+    Position = { 10, 580 },
+    Size = { 380, 20 },
+    Style = "None"
+  }
+  
+  return layout, graphics
+end
+
+-- Runtime script
+if Controls then
+  -- Load required libraries
+  local rapidjson
+  local json_available = pcall(function()
+    rapidjson = require("rapidjson")
+  end)
+  
+  if not json_available then
+    print("ERROR: rapidjson library not available. Plugin cannot function.")
+  end
+  
+  -- Status constants
+  local STATUS_OK = 0
+  local STATUS_COMPROMISED = 1
+  local STATUS_FAULT = 2
+  local STATUS_NOT_PRESENT = 3
+  local STATUS_MISSING = 4
+  local STATUS_INITIALIZING = 5
+  
+  -- Configuration constants
+  local HTTP_TIMEOUT = 30
+  local DEFAULT_SHUTDOWN_TIME = 1  -- Default shutdown delay in minutes
+  
+  -- Initialize controls with default values
+  Controls.host.String = Properties["Host"].Value
+  Controls.port.String = tostring(Properties["Port"].Value)
+  Controls.status.Value = STATUS_INITIALIZING
+  Controls.statusText.String = "Initializing"
+  
+  -- Set initial command list (this would be better as a dropdown in a real implementation)
+  Controls.command.String = "shutdown"
+  
+  -- Helper function to send HTTP POST request
+  function SendCommand()
+    local host = Controls.host.String
+    local port = Controls.port.String
+    local password = Controls.password.String
+    local command = Controls.command.String
+    
+    -- Validate inputs
+    if host == "" then
+      Controls.status.Value = STATUS_FAULT
+      Controls.statusText.String = "Error: Host required"
+      return
+    end
+    
+    if port == "" then
+      Controls.status.Value = STATUS_FAULT
+      Controls.statusText.String = "Error: Port required"
+      return
+    end
+    
+    if command == "" then
+      Controls.status.Value = STATUS_FAULT
+      Controls.statusText.String = "Error: Command required"
+      return
+    end
+    
+    -- Build payload based on command
+    local payload = {
+      command = command,
+      password = password
+    }
+    
+    -- Add parameters based on command type
+    -- System Commands
+    if command == "shutdown" then
+      local time = Controls.time.String
+      if time ~= "" then
+        payload.time = tonumber(time) or DEFAULT_SHUTDOWN_TIME
+      end
+    
+    -- Script Commands
+    elseif command == "runScript" then
+      payload.executable = Controls.executable.String
+      payload.args = Controls.args.String
+      payload.stdin = Controls.stdin.String
+    
+    -- Input Commands
+    elseif command == "sendInput" then
+      payload.type = Controls.inputType.String
+      payload.key = Controls.key.String
+    
+    -- UI Commands
+    elseif command == "sendAlert" then
+      payload.message = Controls.message.String
+    
+    -- File Commands
+    elseif command == "moveFile" then
+      payload.sourcePath = Controls.sourcePath.String
+      payload.destPath = Controls.destPath.String
+      payload.copyOnly = Controls.copyOnly.Boolean
+    
+    elseif command == "moveDatedFileInFolder" then
+      payload.sourceFolderPath = Controls.sourceFolderPath.String
+      payload.destFolderPath = Controls.destFolderPath.String
+      payload.newestOrOldest = Controls.newestOrOldest.String
+      payload.fileExtension = Controls.fileExtension.String
+      payload.fileName = Controls.fileName.String
+      payload.copyOnly = Controls.copyOnly.Boolean
+    
+    elseif command == "moveDatedFileInFolderWithExtension" then
+      payload.sourceFolderPath = Controls.sourceFolderPath.String
+      payload.destFolderPath = Controls.destFolderPath.String
+      payload.newestOrOldest = Controls.newestOrOldest.String
+      payload.fileExtension = Controls.fileExtension.String
+      payload.fileName = Controls.fileName.String
+      payload.copyOnly = Controls.copyOnly.Boolean
+    
+    elseif command == "moveFileBasedOnSize" then
+      payload.sourceFolderPath = Controls.sourceFolderPath.String
+      payload.destFolderPathLarger = Controls.destFolderPathLarger.String
+      payload.destFolderPathSmaller = Controls.destFolderPathSmaller.String
+      -- Require explicit size threshold - no default to avoid unexpected behavior
+      local threshold = Controls.sizeThreshold.String
+      if threshold ~= "" then
+        payload.sizeThreshold = tonumber(threshold)
+      end
+      payload.fileExtension = Controls.fileExtension.String
+      payload.fileName = Controls.fileName.String
+      payload.copyOnly = Controls.copyOnly.Boolean
+    
+    -- App Commands
+    elseif command == "focusApp" or command == "quitApp" then
+      payload.appName = Controls.appName.String
+    end
+    
+    -- Convert payload to JSON
+    local jsonPayload = rapidjson.encode(payload)
+    
+    -- Build URL
+    local url = string.format("http://%s:%s/command", host, port)
+    
+    -- Update status
+    Controls.status.Value = STATUS_COMPROMISED
+    Controls.statusText.String = "Sending..."
+    
+    -- Send HTTP POST request
+    HttpClient.Upload {
+      Url = url,
+      Method = "POST",
+      Headers = {
+        ["Content-Type"] = "application/json"
+      },
+      Data = jsonPayload,
+      Timeout = HTTP_TIMEOUT,
+      EventHandler = function(tbl, code, data, err, headers)
+        if code == 200 then
+          -- Success
+          Controls.status.Value = STATUS_OK
+          Controls.statusText.String = "Command sent"
+          
+          -- Try to parse response
+          local success, result = pcall(function()
+            return rapidjson.decode(data)
+          end)
+          
+          if success and result then
+            if result.message then
+              Controls.result.String = result.message
+            elseif result.error then
+              Controls.result.String = "Error: " .. tostring(result.error)
+              Controls.status.Value = STATUS_FAULT
+              Controls.statusText.String = "Command error"
+            else
+              Controls.result.String = data
+            end
+          else
+            Controls.result.String = data
+          end
+        elseif code == 0 then
+          -- Connection error
+          Controls.status.Value = STATUS_FAULT
+          Controls.statusText.String = "Connection failed"
+          Controls.result.String = "Error: " .. tostring(err)
+        else
+          -- HTTP error
+          Controls.status.Value = STATUS_FAULT
+          Controls.statusText.String = "HTTP error " .. tostring(code)
+          Controls.result.String = "Error: " .. tostring(data or err)
+        end
+      end
+    }
+  end
+  
+  -- Event handler for send command button
+  Controls.sendCommand.EventHandler = function()
+    SendCommand()
+  end
+  
+  -- Set initial status to OK after initialization
+  Timer.CallAfter(function()
+    Controls.status.Value = STATUS_OK
+    Controls.statusText.String = "Ready"
+  end, 1)
+end
