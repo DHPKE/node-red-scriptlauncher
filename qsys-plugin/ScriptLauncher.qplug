@@ -1041,8 +1041,15 @@ if Controls then
     for k, v in pairs(tbl) do
       local value_str
       if type(v) == "string" then
-        -- Escape quotes and backslashes
-        value_str = '"' .. v:gsub('\\', '\\\\'):gsub('"', '\\"') .. '"'
+        -- Escape JSON control characters
+        local escaped = v:gsub('\\', '\\\\')  -- Backslash first
+                        :gsub('"', '\\"')      -- Quote
+                        :gsub('\n', '\\n')     -- Newline
+                        :gsub('\r', '\\r')     -- Carriage return
+                        :gsub('\t', '\\t')     -- Tab
+                        :gsub('\b', '\\b')     -- Backspace
+                        :gsub('\f', '\\f')     -- Form feed
+        value_str = '"' .. escaped .. '"'
       elseif type(v) == "number" then
         value_str = tostring(v)
       elseif type(v) == "boolean" then
@@ -1414,6 +1421,12 @@ if Controls then
     
     -- If JSON provided, use it directly with password appended
     if json_str ~= "" and json_str:sub(1,1) == "{" then
+      -- Trim whitespace and ensure it ends with }
+      json_str = json_str:match("^%s*(.-)%s*$")
+      if json_str:sub(-1) ~= "}" then
+        UpdateStatus(2, "Invalid JSON format - must end with }")
+        return
+      end
       local json_with_password = json_str:sub(1, -2) .. ',"password":"' .. password .. '"}'
       
       local url = HttpClient.CreateUrl({
@@ -1452,6 +1465,12 @@ if Controls then
       end
       
       if json_str:sub(1,1) == "{" then
+        -- Trim whitespace and ensure it ends with }
+        json_str = json_str:match("^%s*(.-)%s*$")
+        if json_str:sub(-1) ~= "}" then
+          UpdateStatus(2, "Invalid JSON for command " .. i .. " - must end with }")
+          return
+        end
         local json_with_password = json_str:sub(1, -2) .. ',"password":"' .. password .. '"}'
         
         local url = HttpClient.CreateUrl({
