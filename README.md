@@ -31,7 +31,7 @@ A comprehensive Q-SYS Designer plugin (.qplug) that provides complete control ov
 
 **Version 2.0 - NEW Features:**
 - **✅ PERSISTENT CONNECTION SETTINGS** - IP Address, Port, and Password are saved with the design file using Q-SYS Properties
-- Complete support for all 16 ScriptLauncher commands organized in 6 categories (System, Script, Input, UI, File, App)
+- Complete support for all 15 ScriptLauncher commands organized in 6 categories (System, Script, Input, UI, File, App)
 - **Command Selection dropdown** - Unified interface with all commands in a single dropdown menu
 - REST API integration using HTTP POST requests
 - Dynamic parameter configuration based on command type

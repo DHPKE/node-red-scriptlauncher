@@ -18,7 +18,7 @@ These settings are saved with your Q-SYS design file and will be preserved when 
 
 ### Complete Command Coverage
 
-The plugin includes ALL 16 basic ScriptLauncher commands organized into 6 categories:
+The plugin includes ALL 15 basic ScriptLauncher commands organized into 6 categories:
 
 #### System Commands (5 commands)
 - `shutdown` - Shutdown the system after a delay (requires time parameter in minutes)
