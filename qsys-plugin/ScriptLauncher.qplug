@@ -1,0 +1,1573 @@
+-- ScriptLauncher Control Plugin for Q-SYS
+-- Version: 2.0.0
+-- Description: Control remote ScriptLauncher with persistent connection settings
+-- Author: DHPKE
+
+PluginInfo = {
+  Name = "PKE~ScriptLauncherControl",
+  Version = "2.0.0",
+  BuildVersion = "2.0.0.0",
+  Id = "scriptlauncher.control.v2",
+  Author = "DHPKE",
+  Description = "Control ScriptLauncher with persistent settings and full command support"
+}
+
+-- Define the color of the plugin object in the design
+function GetColor(props)
+  return { 102, 102, 102 }
+end
+
+-- The name that will initially display when dragged into a design
+function GetPrettyName(props)
+  return "ScriptLauncher Control v" .. PluginInfo.Version
+end
+
+-- Define User Properties (PERSISTENT - saved with design file)
+function GetProperties()
+  local props = {
+    {
+      Name = "IP Address",
+      Type = "string",
+      Value = "localhost"
+    },
+    {
+      Name = "Port",
+      Type = "integer",
+      Min = 1,
+      Max = 65535,
+      Value = 8810
+    },
+    {
+      Name = "Password",
+      Type = "string",
+      Value = ""
+    },
+    {
+      Name = "Auto Reconnect",
+      Type = "boolean",
+      Value = true
+    },
+    {
+      Name = "Command Buttons",
+      Type = "integer",
+      Min = 1,
+      Max = 20,
+      Value = 5
+    },
+    {
+      Name = "Debug",
+      Type = "boolean",
+      Value = false
+    }
+  }
+  return props
+end
+
+-- Defines the Controls used within the plugin
+function GetControls(props)
+  local ctrls = {
+    -- Connection Controls (display only - actual values from Properties)
+    {
+      Name = "host_display",
+      ControlType = "Text",
+      PinStyle = "Output",
+      Count = 1,
+      UserPin = true
+    },
+    {
+      Name = "port_display",
+      ControlType = "Text",
+      PinStyle = "Output",
+      Count = 1,
+      UserPin = true
+    },
+    {
+      Name = "connect",
+      ControlType = "Button",
+      ButtonType = "Toggle",
+      Count = 1,
+      UserPin = true
+    },
+    {
+      Name = "connection_status",
+      ControlType = "Indicator",
+      IndicatorType = "Status",
+      PinStyle = "Output",
+      Count = 1,
+      UserPin = true
+    },
+    {
+      Name = "status_text",
+      ControlType = "Text",
+      PinStyle = "Output",
+      Count = 1,
+      UserPin = true
+    },
+    {
+      Name = "remote_hostname",
+      ControlType = "Text",
+      PinStyle = "Output",
+      Count = 1,
+      UserPin = true
+    },
+    {
+      Name = "remote_version",
+      ControlType = "Text",
+      PinStyle = "Output",
+      Count = 1,
+      UserPin = true
+    },
+    {
+      Name = "remote_platform",
+      ControlType = "Text",
+      PinStyle = "Output",
+      Count = 1,
+      UserPin = true
+    },
+    {
+      Name = "remote_uptime",
+      ControlType = "Text",
+      PinStyle = "Output",
+      Count = 1,
+      UserPin = true
+    },
+    -- System Commands
+    {
+      Name = "shutdown",
+      ControlType = "Button",
+      ButtonType = "Trigger",
+      Count = 1,
+      UserPin = true
+    },
+    {
+      Name = "shutdown_time",
+      ControlType = "Text",
+      PinStyle = "Input",
+      Count = 1,
+      UserPin = true
+    },
+    {
+      Name = "reboot",
+      ControlType = "Button",
+      ButtonType = "Trigger",
+      Count = 1,
+      UserPin = true
+    },
+    {
+      Name = "lock",
+      ControlType = "Button",
+      ButtonType = "Trigger",
+      Count = 1,
+      UserPin = true
+    },
+    {
+      Name = "shutdown_cancel",
+      ControlType = "Button",
+      ButtonType = "Trigger",
+      Count = 1,
+      UserPin = true
+    },
+    -- Script Execution
+    {
+      Name = "run_script",
+      ControlType = "Button",
+      ButtonType = "Trigger",
+      Count = 1,
+      UserPin = true
+    },
+    {
+      Name = "script_path",
+      ControlType = "Text",
+      PinStyle = "Input",
+      Count = 1,
+      UserPin = true
+    },
+    {
+      Name = "script_args",
+      ControlType = "Text",
+      PinStyle = "Input",
+      Count = 1,
+      UserPin = true
+    },
+    {
+      Name = "script_stdin",
+      ControlType = "Text",
+      PinStyle = "Input",
+      Count = 1,
+      UserPin = true
+    },
+    -- Alert System
+    {
+      Name = "send_alert",
+      ControlType = "Button",
+      ButtonType = "Trigger",
+      Count = 1,
+      UserPin = true
+    },
+    {
+      Name = "alert_message",
+      ControlType = "Text",
+      PinStyle = "Input",
+      Count = 1,
+      UserPin = true
+    },
+    -- System Info
+    {
+      Name = "get_system_info",
+      ControlType = "Button",
+      ButtonType = "Trigger",
+      Count = 1,
+      UserPin = true
+    },
+    {
+      Name = "get_fonts",
+      ControlType = "Button",
+      ButtonType = "Trigger",
+      Count = 1,
+      UserPin = true
+    },
+    {
+      Name = "system_info",
+      ControlType = "Text",
+      PinStyle = "Output",
+      Count = 1,
+      UserPin = true
+    },
+    -- App Control
+    {
+      Name = "focus_app",
+      ControlType = "Button",
+      ButtonType = "Trigger",
+      Count = 1,
+      UserPin = true
+    },
+    {
+      Name = "app_name",
+      ControlType = "Text",
+      PinStyle = "Input",
+      Count = 1,
+      UserPin = true
+    },
+    {
+      Name = "quit_app",
+      ControlType = "Button",
+      ButtonType = "Trigger",
+      Count = 1,
+      UserPin = true
+    },
+    -- Input Commands
+    {
+      Name = "send_input",
+      ControlType = "Button",
+      ButtonType = "Trigger",
+      Count = 1,
+      UserPin = true
+    },
+    {
+      Name = "input_type",
+      ControlType = "Text",
+      PinStyle = "Input",
+      Count = 1,
+      UserPin = true
+    },
+    {
+      Name = "input_key",
+      ControlType = "Text",
+      PinStyle = "Input",
+      Count = 1,
+      UserPin = true
+    },
+    -- File Commands
+    {
+      Name = "move_file",
+      ControlType = "Button",
+      ButtonType = "Trigger",
+      Count = 1,
+      UserPin = true
+    },
+    {
+      Name = "file_source",
+      ControlType = "Text",
+      PinStyle = "Input",
+      Count = 1,
+      UserPin = true
+    },
+    {
+      Name = "file_dest",
+      ControlType = "Text",
+      PinStyle = "Input",
+      Count = 1,
+      UserPin = true
+    },
+    {
+      Name = "file_copy_only",
+      ControlType = "Button",
+      ButtonType = "Toggle",
+      Count = 1,
+      UserPin = true
+    },
+    -- Command Selection Dropdown
+    {
+      Name = "command_dropdown",
+      ControlType = "Text",
+      ControlUnit = "Combo",
+      PinStyle = "Input",
+      Count = 1,
+      UserPin = true
+    },
+    {
+      Name = "dropdown_param1",
+      ControlType = "Text",
+      PinStyle = "Input",
+      Count = 1,
+      UserPin = true
+    },
+    {
+      Name = "dropdown_param2",
+      ControlType = "Text",
+      PinStyle = "Input",
+      Count = 1,
+      UserPin = true
+    },
+    {
+      Name = "dropdown_param3",
+      ControlType = "Text",
+      PinStyle = "Input",
+      Count = 1,
+      UserPin = true
+    },
+    {
+      Name = "execute_dropdown",
+      ControlType = "Button",
+      ButtonType = "Trigger",
+      Count = 1,
+      UserPin = true
+    },
+    -- Custom Command
+    {
+      Name = "custom_command",
+      ControlType = "Text",
+      PinStyle = "Input",
+      Count = 1,
+      UserPin = true
+    },
+    {
+      Name = "custom_json",
+      ControlType = "Text",
+      PinStyle = "Input",
+      Count = 1,
+      UserPin = true
+    },
+    {
+      Name = "send_custom",
+      ControlType = "Button",
+      ButtonType = "Trigger",
+      Count = 1,
+      UserPin = true
+    },
+    -- Response
+    {
+      Name = "last_response",
+      ControlType = "Text",
+      PinStyle = "Output",
+      Count = 1,
+      UserPin = true
+    }
+  }
+  
+  -- Add custom command buttons
+  for i = 1, props["Command Buttons"].Value do
+    table.insert(ctrls, {
+      Name = "cmd_" .. i .. "_trigger",
+      ControlType = "Button",
+      ButtonType = "Trigger",
+      Count = 1,
+      UserPin = true
+    })
+    table.insert(ctrls, {
+      Name = "cmd_" .. i .. "_name",
+      ControlType = "Text",
+      PinStyle = "Input",
+      Count = 1,
+      UserPin = true
+    })
+    table.insert(ctrls, {
+      Name = "cmd_" .. i .. "_json",
+      ControlType = "Text",
+      PinStyle = "Input",
+      Count = 1,
+      UserPin = true
+    })
+  end
+  
+  return ctrls
+end
+
+-- Layout of controls and graphics for the plugin UI
+function GetControlLayout(props)
+  local layout = {}
+  local graphics = {}
+  
+  -- Connection Section
+  local y_pos = 5
+  graphics[#graphics + 1] = {
+    Type = "GroupBox",
+    Fill = {102, 102, 102},
+    StrokeWidth = 1,
+    Position = {5, y_pos},
+    Size = {460, 130}
+  }
+  graphics[#graphics + 1] = {
+    Type = "Text",
+    Text = "Connection Settings (Persistent)",
+    Font = "Roboto",
+    FontSize = 12,
+    FontStyle = "Bold",
+    Position = {10, y_pos + 5},
+    Size = {250, 16}
+  }
+  
+  graphics[#graphics + 1] = {
+    Type = "Text",
+    Text = "Host/IP:",
+    Font = "Roboto",
+    FontSize = 10,
+    Position = {10, y_pos + 28},
+    Size = {60, 16},
+    HTextAlign = "Right"
+  }
+  
+  layout["host_display"] = {
+    PrettyName = "Host/IP Address (from Properties)",
+    Style = "Text",
+    Position = {75, y_pos + 25},
+    Size = {150, 20},
+    IsReadOnly = true
+  }
+  
+  graphics[#graphics + 1] = {
+    Type = "Text",
+    Text = "Port:",
+    Font = "Roboto",
+    FontSize = 10,
+    Position = {230, y_pos + 28},
+    Size = {40, 16},
+    HTextAlign = "Right"
+  }
+  
+  layout["port_display"] = {
+    PrettyName = "Port (from Properties)",
+    Style = "Text",
+    Position = {275, y_pos + 25},
+    Size = {60, 20},
+    IsReadOnly = true
+  }
+  
+  graphics[#graphics + 1] = {
+    Type = "Text",
+    Text = "Configure IP, Port, and Password in Plugin Properties →",
+    Font = "Roboto",
+    FontSize = 9,
+    FontStyle = "Italic",
+    Position = {10, y_pos + 50},
+    Size = {320, 16}
+  }
+  
+  layout["connect"] = {
+    PrettyName = "Connect",
+    Style = "Button",
+    Legend = "Connect",
+    Color = {0, 255, 0},
+    OffColor = {200, 0, 0},
+    UnlinkOffColor = true,
+    Position = {340, y_pos + 25},
+    Size = {110, 45}
+  }
+  
+  layout["connection_status"] = {
+    PrettyName = "Connection Status",
+    Style = "Indicator",
+    Position = {10, y_pos + 80},
+    Size = {50, 20}
+  }
+  
+  layout["status_text"] = {
+    PrettyName = "Status",
+    Style = "Text",
+    Position = {65, y_pos + 80},
+    Size = {385, 20}
+  }
+  
+  layout["remote_hostname"] = {
+    PrettyName = "Hostname",
+    Style = "Text",
+    Position = {10, y_pos + 105},
+    Size = {110, 20}
+  }
+  
+  layout["remote_version"] = {
+    PrettyName = "Version",
+    Style = "Text",
+    Position = {125, y_pos + 105},
+    Size = {100, 20}
+  }
+  
+  layout["remote_platform"] = {
+    PrettyName = "Platform",
+    Style = "Text",
+    Position = {230, y_pos + 105},
+    Size = {110, 20}
+  }
+  
+  layout["remote_uptime"] = {
+    PrettyName = "Uptime",
+    Style = "Text",
+    Position = {345, y_pos + 105},
+    Size = {105, 20}
+  }
+  
+  -- System Commands Section
+  y_pos = 145
+  graphics[#graphics + 1] = {
+    Type = "GroupBox",
+    Fill = {102, 102, 102},
+    StrokeWidth = 1,
+    Position = {5, y_pos},
+    Size = {460, 90}
+  }
+  graphics[#graphics + 1] = {
+    Type = "Text",
+    Text = "System Commands",
+    Font = "Roboto",
+    FontSize = 12,
+    FontStyle = "Bold",
+    Position = {10, y_pos + 5},
+    Size = {150, 16}
+  }
+  
+  layout["shutdown"] = {
+    PrettyName = "Shutdown",
+    Style = "Button",
+    Legend = "Shutdown",
+    Position = {10, y_pos + 25},
+    Size = {80, 25}
+  }
+  
+  layout["shutdown_time"] = {
+    PrettyName = "Shutdown Time (min)",
+    Style = "Text",
+    Position = {95, y_pos + 25},
+    Size = {60, 25}
+  }
+  
+  layout["reboot"] = {
+    PrettyName = "Reboot",
+    Style = "Button",
+    Legend = "Reboot",
+    Position = {160, y_pos + 25},
+    Size = {80, 25}
+  }
+  
+  layout["lock"] = {
+    PrettyName = "Lock",
+    Style = "Button",
+    Legend = "Lock",
+    Position = {245, y_pos + 25},
+    Size = {80, 25}
+  }
+  
+  layout["shutdown_cancel"] = {
+    PrettyName = "Cancel Shutdown",
+    Style = "Button",
+    Legend = "Cancel",
+    Position = {330, y_pos + 25},
+    Size = {80, 25}
+  }
+  
+  layout["get_system_info"] = {
+    PrettyName = "Get System Info",
+    Style = "Button",
+    Legend = "Get Info",
+    Position = {10, y_pos + 55},
+    Size = {80, 25}
+  }
+  
+  layout["get_fonts"] = {
+    PrettyName = "Get Fonts",
+    Style = "Button",
+    Legend = "Get Fonts",
+    Position = {95, y_pos + 55},
+    Size = {80, 25}
+  }
+  
+  layout["system_info"] = {
+    PrettyName = "System Info",
+    Style = "Text",
+    Position = {180, y_pos + 55},
+    Size = {275, 25}
+  }
+  
+  -- Script Execution Section
+  y_pos = 245
+  graphics[#graphics + 1] = {
+    Type = "GroupBox",
+    Fill = {102, 102, 102},
+    StrokeWidth = 1,
+    Position = {5, y_pos},
+    Size = {460, 115}
+  }
+  graphics[#graphics + 1] = {
+    Type = "Text",
+    Text = "Script Execution",
+    Font = "Roboto",
+    FontSize = 12,
+    FontStyle = "Bold",
+    Position = {10, y_pos + 5},
+    Size = {150, 16}
+  }
+  
+  layout["script_path"] = {
+    PrettyName = "Script Path",
+    Style = "Text",
+    Position = {10, y_pos + 25},
+    Size = {340, 25}
+  }
+  
+  layout["script_args"] = {
+    PrettyName = "Arguments",
+    Style = "Text",
+    Position = {10, y_pos + 55},
+    Size = {340, 25}
+  }
+  
+  layout["script_stdin"] = {
+    PrettyName = "Stdin",
+    Style = "Text",
+    Position = {10, y_pos + 85},
+    Size = {340, 25}
+  }
+  
+  layout["run_script"] = {
+    PrettyName = "Run Script",
+    Style = "Button",
+    Legend = "Run",
+    Position = {355, y_pos + 25},
+    Size = {100, 85}
+  }
+  
+  -- Alert Section
+  y_pos = 370
+  graphics[#graphics + 1] = {
+    Type = "GroupBox",
+    Fill = {102, 102, 102},
+    StrokeWidth = 1,
+    Position = {5, y_pos},
+    Size = {460, 60}
+  }
+  graphics[#graphics + 1] = {
+    Type = "Text",
+    Text = "Send Alert",
+    Font = "Roboto",
+    FontSize = 12,
+    FontStyle = "Bold",
+    Position = {10, y_pos + 5},
+    Size = {150, 16}
+  }
+  
+  layout["alert_message"] = {
+    PrettyName = "Alert Message",
+    Style = "Text",
+    Position = {10, y_pos + 25},
+    Size = {340, 25}
+  }
+  
+  layout["send_alert"] = {
+    PrettyName = "Send Alert",
+    Style = "Button",
+    Legend = "Send",
+    Position = {355, y_pos + 25},
+    Size = {100, 25}
+  }
+  
+  -- App Control Section
+  y_pos = 440
+  graphics[#graphics + 1] = {
+    Type = "GroupBox",
+    Fill = {102, 102, 102},
+    StrokeWidth = 1,
+    Position = {5, y_pos},
+    Size = {460, 60}
+  }
+  graphics[#graphics + 1] = {
+    Type = "Text",
+    Text = "Application Control",
+    Font = "Roboto",
+    FontSize = 12,
+    FontStyle = "Bold",
+    Position = {10, y_pos + 5},
+    Size = {150, 16}
+  }
+  
+  layout["app_name"] = {
+    PrettyName = "App Name",
+    Style = "Text",
+    Position = {10, y_pos + 25},
+    Size = {200, 25}
+  }
+  
+  layout["focus_app"] = {
+    PrettyName = "Focus App",
+    Style = "Button",
+    Legend = "Focus",
+    Position = {215, y_pos + 25},
+    Size = {70, 25}
+  }
+  
+  layout["quit_app"] = {
+    PrettyName = "Quit App",
+    Style = "Button",
+    Legend = "Quit",
+    Position = {290, y_pos + 25},
+    Size = {70, 25}
+  }
+  
+  -- Input Commands Section
+  y_pos = 510
+  graphics[#graphics + 1] = {
+    Type = "GroupBox",
+    Fill = {102, 102, 102},
+    StrokeWidth = 1,
+    Position = {5, y_pos},
+    Size = {460, 60}
+  }
+  graphics[#graphics + 1] = {
+    Type = "Text",
+    Text = "Send Input",
+    Font = "Roboto",
+    FontSize = 12,
+    FontStyle = "Bold",
+    Position = {10, y_pos + 5},
+    Size = {150, 16}
+  }
+  
+  layout["input_type"] = {
+    PrettyName = "Input Type",
+    Style = "Text",
+    Position = {10, y_pos + 25},
+    Size = {100, 25}
+  }
+  
+  layout["input_key"] = {
+    PrettyName = "Key/Button",
+    Style = "Text",
+    Position = {115, y_pos + 25},
+    Size = {140, 25}
+  }
+  
+  layout["send_input"] = {
+    PrettyName = "Send Input",
+    Style = "Button",
+    Legend = "Send",
+    Position = {260, y_pos + 25},
+    Size = {100, 25}
+  }
+  
+  -- File Commands Section
+  y_pos = 580
+  graphics[#graphics + 1] = {
+    Type = "GroupBox",
+    Fill = {102, 102, 102},
+    StrokeWidth = 1,
+    Position = {5, y_pos},
+    Size = {460, 90}
+  }
+  graphics[#graphics + 1] = {
+    Type = "Text",
+    Text = "File Operations",
+    Font = "Roboto",
+    FontSize = 12,
+    FontStyle = "Bold",
+    Position = {10, y_pos + 5},
+    Size = {150, 16}
+  }
+  
+  layout["file_source"] = {
+    PrettyName = "Source Path",
+    Style = "Text",
+    Position = {10, y_pos + 25},
+    Size = {340, 25}
+  }
+  
+  layout["file_dest"] = {
+    PrettyName = "Destination Path",
+    Style = "Text",
+    Position = {10, y_pos + 55},
+    Size = {240, 25}
+  }
+  
+  layout["file_copy_only"] = {
+    PrettyName = "Copy Only",
+    Style = "Button",
+    Legend = "Copy",
+    ButtonType = "Toggle",
+    Position = {255, y_pos + 55},
+    Size = {50, 25}
+  }
+  
+  layout["move_file"] = {
+    PrettyName = "Move File",
+    Style = "Button",
+    Legend = "Move",
+    Position = {355, y_pos + 25},
+    Size = {100, 55}
+  }
+  
+  -- Command Selection Section
+  y_pos = 680
+  graphics[#graphics + 1] = {
+    Type = "GroupBox",
+    Fill = {102, 102, 102},
+    StrokeWidth = 1,
+    Position = {5, y_pos},
+    Size = {460, 120}
+  }
+  graphics[#graphics + 1] = {
+    Type = "Text",
+    Text = "Command Selection (ALL Commands)",
+    Font = "Roboto",
+    FontSize = 12,
+    FontStyle = "Bold",
+    Position = {10, y_pos + 5},
+    Size = {250, 16}
+  }
+  
+  graphics[#graphics + 1] = {
+    Type = "Text",
+    Text = "Command:",
+    Font = "Roboto",
+    FontSize = 10,
+    Position = {10, y_pos + 28},
+    Size = {70, 16},
+    HTextAlign = "Right"
+  }
+  
+  layout["command_dropdown"] = {
+    PrettyName = "Command Dropdown",
+    Style = "ComboBox",
+    Position = {85, y_pos + 25},
+    Size = {265, 20}
+  }
+  
+  graphics[#graphics + 1] = {
+    Type = "Text",
+    Text = "Param 1:",
+    Font = "Roboto",
+    FontSize = 10,
+    Position = {10, y_pos + 53},
+    Size = {70, 16},
+    HTextAlign = "Right"
+  }
+  
+  layout["dropdown_param1"] = {
+    PrettyName = "Parameter 1",
+    Style = "Text",
+    Position = {85, y_pos + 50},
+    Size = {265, 20}
+  }
+  
+  graphics[#graphics + 1] = {
+    Type = "Text",
+    Text = "Param 2:",
+    Font = "Roboto",
+    FontSize = 10,
+    Position = {10, y_pos + 78},
+    Size = {70, 16},
+    HTextAlign = "Right"
+  }
+  
+  layout["dropdown_param2"] = {
+    PrettyName = "Parameter 2",
+    Style = "Text",
+    Position = {85, y_pos + 75},
+    Size = {265, 20}
+  }
+  
+  graphics[#graphics + 1] = {
+    Type = "Text",
+    Text = "Param 3:",
+    Font = "Roboto",
+    FontSize = 10,
+    Position = {10, y_pos + 103},
+    Size = {70, 16},
+    HTextAlign = "Right"
+  }
+  
+  layout["dropdown_param3"] = {
+    PrettyName = "Parameter 3",
+    Style = "Text",
+    Position = {85, y_pos + 100},
+    Size = {265, 20}
+  }
+  
+  layout["execute_dropdown"] = {
+    PrettyName = "Execute Command",
+    Style = "Button",
+    Legend = "Execute",
+    Color = {0, 180, 255},
+    Position = {355, y_pos + 25},
+    Size = {100, 95}
+  }
+  
+  -- Custom Command Section
+  y_pos = 810
+  graphics[#graphics + 1] = {
+    Type = "GroupBox",
+    Fill = {102, 102, 102},
+    StrokeWidth = 1,
+    Position = {5, y_pos},
+    Size = {460, 90}
+  }
+  graphics[#graphics + 1] = {
+    Type = "Text",
+    Text = "Custom Command",
+    Font = "Roboto",
+    FontSize = 12,
+    FontStyle = "Bold",
+    Position = {10, y_pos + 5},
+    Size = {150, 16}
+  }
+  
+  layout["custom_command"] = {
+    PrettyName = "Command",
+    Style = "Text",
+    Position = {10, y_pos + 25},
+    Size = {340, 25}
+  }
+  
+  layout["custom_json"] = {
+    PrettyName = "JSON Parameters",
+    Style = "Text",
+    Position = {10, y_pos + 55},
+    Size = {340, 25}
+  }
+  
+  layout["send_custom"] = {
+    PrettyName = "Send Custom",
+    Style = "Button",
+    Legend = "Send",
+    Position = {355, y_pos + 25},
+    Size = {100, 55}
+  }
+  
+  -- Command Buttons Section
+  y_pos = 910
+  graphics[#graphics + 1] = {
+    Type = "GroupBox",
+    Fill = {102, 102, 102},
+    StrokeWidth = 1,
+    Position = {5, y_pos},
+    Size = {460, 30 + (props["Command Buttons"].Value * 30)}
+  }
+  graphics[#graphics + 1] = {
+    Type = "Text",
+    Text = "Preset Commands",
+    Font = "Roboto",
+    FontSize = 12,
+    FontStyle = "Bold",
+    Position = {10, y_pos + 5},
+    Size = {150, 16}
+  }
+  
+  for i = 1, props["Command Buttons"].Value do
+    local button_y = y_pos + 25 + ((i - 1) * 30)
+    
+    layout["cmd_" .. i .. "_trigger"] = {
+      PrettyName = "Trigger " .. i,
+      Style = "Button",
+      Legend = "Run",
+      Position = {10, button_y},
+      Size = {60, 25}
+    }
+    
+    layout["cmd_" .. i .. "_name"] = {
+      PrettyName = "Name " .. i,
+      Style = "Text",
+      Position = {75, button_y},
+      Size = {150, 25}
+    }
+    
+    layout["cmd_" .. i .. "_json"] = {
+      PrettyName = "JSON " .. i,
+      Style = "Text",
+      Position = {230, button_y},
+      Size = {225, 25}
+    }
+  end
+  
+  -- Response Section
+  y_pos = 950 + (props["Command Buttons"].Value * 30)
+  graphics[#graphics + 1] = {
+    Type = "GroupBox",
+    Fill = {102, 102, 102},
+    StrokeWidth = 1,
+    Position = {5, y_pos},
+    Size = {460, 60}
+  }
+  graphics[#graphics + 1] = {
+    Type = "Text",
+    Text = "Last Response",
+    Font = "Roboto",
+    FontSize = 12,
+    FontStyle = "Bold",
+    Position = {10, y_pos + 5},
+    Size = {150, 16}
+  }
+  
+  layout["last_response"] = {
+    PrettyName = "Response",
+    Style = "Text",
+    Position = {10, y_pos + 25},
+    Size = {445, 25}
+  }
+  
+  return layout, graphics
+end
+
+-- Start of the Runtime
+if Controls then
+  -- Simple JSON string builder (no library needed)
+  local function BuildJsonString(tbl)
+    local pairs_list = {}
+    for k, v in pairs(tbl) do
+      local value_str
+      if type(v) == "string" then
+        -- Escape JSON control characters
+        local escaped = v:gsub('\\', '\\\\')  -- Backslash first
+                        :gsub('"', '\\"')      -- Quote
+                        :gsub('\n', '\\n')     -- Newline
+                        :gsub('\r', '\\r')     -- Carriage return
+                        :gsub('\t', '\\t')     -- Tab
+                        :gsub('\b', '\\b')     -- Backspace
+                        :gsub('\f', '\\f')     -- Form feed
+        value_str = '"' .. escaped .. '"'
+      elseif type(v) == "number" then
+        value_str = tostring(v)
+      elseif type(v) == "boolean" then
+        value_str = tostring(v)
+      else
+        value_str = '""'
+      end
+      table.insert(pairs_list, '"' .. k .. '":' .. value_str)
+    end
+    return "{" .. table.concat(pairs_list, ",") .. "}"
+  end
+  
+  -- Variables - READ FROM PROPERTIES (PERSISTENT)
+  local host = Properties["IP Address"].Value
+  local port = Properties["Port"].Value
+  local password = Properties["Password"].Value
+  local auto_reconnect = Properties["Auto Reconnect"].Value
+  local debug = Properties["Debug"].Value
+  
+  local is_connected = false
+  local reconnect_timer = nil
+  local keepalive_timer = nil
+  
+  -- Command dropdown choices and parameter mappings
+  local command_choices = {
+    "--- System ---",
+    "shutdown",
+    "shutdown_cancel",
+    "reboot",
+    "lock",
+    "getSystemInfo",
+    "--- Script ---",
+    "runScript",
+    "--- Input ---",
+    "sendInput",
+    "--- UI ---",
+    "sendAlert",
+    "getFonts",
+    "--- File ---",
+    "moveFile",
+    "moveDatedFileInFolder",
+    "moveDatedFileInFolderWithExtension",
+    "moveFileBasedOnSize",
+    "--- App ---",
+    "focusApp",
+    "quitApp"
+  }
+  
+  -- Map command to required parameters
+  local command_params = {
+    shutdown = {"time"},
+    shutdown_cancel = {},
+    reboot = {},
+    lock = {},
+    getSystemInfo = {},
+    runScript = {"scriptPath", "args", "stdin"},
+    sendInput = {"type", "key"},
+    sendAlert = {"message"},
+    getFonts = {},
+    moveFile = {"sourcePath", "destPath", "copyOnly"},
+    moveDatedFileInFolder = {"folder", "destination"},
+    moveDatedFileInFolderWithExtension = {"folder", "extension", "destination"},
+    moveFileBasedOnSize = {"folder", "size", "destination"},
+    focusApp = {"appName"},
+    quitApp = {"appName"}
+  }
+  
+  -- Helper Functions
+  local function Debug(msg)
+    if debug then
+      print("[ScriptLauncher] " .. msg)
+    end
+  end
+  
+  local function UpdateStatus(state, message)
+    Controls.connection_status.Value = state
+    Controls.status_text.String = message
+    Debug("Status: " .. message)
+  end
+  
+  function Connect()
+    if host == "" then
+      UpdateStatus(2, "Host/IP address required - Set in Properties")
+      Controls.connect.Boolean = false
+      return
+    end
+    
+    if reconnect_timer then
+      reconnect_timer:Stop()
+      reconnect_timer = nil
+    end
+    
+    UpdateStatus(5, "Connecting to " .. host .. ":" .. port)
+    Debug("Initiating connection...")
+    
+    -- Test connection with /commands endpoint
+    local url = HttpClient.CreateUrl({
+      Host = host,
+      Port = port,
+      Path = "commands"
+    })
+    
+    HttpClient.Download {
+      Url = url,
+      Timeout = 5,
+      EventHandler = function(tbl, code, data, error, headers)
+        if code == 200 then
+          is_connected = true
+          UpdateStatus(0, "Connected")
+          Controls.remote_hostname.String = host
+          Controls.remote_platform.String = "REST API"
+          Controls.remote_version.String = "Connected"
+          Controls.remote_uptime.String = "Online"
+          
+          -- Start keep-alive monitor
+          if keepalive_timer then
+            keepalive_timer:Stop()
+          end
+          
+          keepalive_timer = Timer.New()
+          keepalive_timer.EventHandler = function()
+            if is_connected then
+              HttpClient.Download {
+                Url = url,
+                Timeout = 3,
+                EventHandler = function(tbl, code, data, error, headers)
+                  if code == 200 then
+                    Controls.remote_uptime.String = "Online"
+                    if Controls.connection_status.Value ~= 0 then
+                      UpdateStatus(0, "Connected")
+                    end
+                  else
+                    UpdateStatus(2, "Keep-alive failed")
+                    is_connected = false
+                    Controls.connect.Boolean = false
+                    if auto_reconnect then
+                      ScheduleReconnect()
+                    end
+                  end
+                end
+              }
+            end
+          end
+          keepalive_timer:Start(10)
+          
+        else
+          UpdateStatus(2, "Connection failed: " .. (error or "Unknown error"))
+          Controls.connect.Boolean = false
+          if auto_reconnect then
+            ScheduleReconnect()
+          end
+        end
+      end
+    }
+  end
+  
+  function ScheduleReconnect()
+    if reconnect_timer then
+      reconnect_timer:Stop()
+    end
+    
+    reconnect_timer = Timer.New()
+    reconnect_timer.EventHandler = function()
+      if Controls.connect.Boolean then
+        Debug("Attempting reconnect...")
+        Connect()
+      end
+    end
+    reconnect_timer:Start(5)
+  end
+  
+  function Disconnect()
+    if keepalive_timer then
+      keepalive_timer:Stop()
+      keepalive_timer = nil
+    end
+    
+    if reconnect_timer then
+      reconnect_timer:Stop()
+      reconnect_timer = nil
+    end
+    
+    is_connected = false
+    UpdateStatus(5, "Disconnected")
+    Controls.remote_hostname.String = ""
+    Controls.remote_version.String = ""
+    Controls.remote_platform.String = ""
+    Controls.remote_uptime.String = ""
+    Debug("Disconnected")
+  end
+  
+  local function SendCommand(command_data)
+    if not is_connected then
+      UpdateStatus(2, "Not connected")
+      return
+    end
+    
+    -- Add password to command (from Properties)
+    command_data.password = password
+    
+    local json_data = BuildJsonString(command_data)
+    Debug("Sending: " .. json_data)
+    
+    local url = HttpClient.CreateUrl({
+      Host = host,
+      Port = port,
+      Path = "command"
+    })
+    
+    HttpClient.Upload {
+      Url = url,
+      Headers = {
+        ["Content-Type"] = "application/json"
+      },
+      Method = "POST",
+      Data = json_data,
+      Timeout = 10,
+      EventHandler = function(tbl, code, data, error, headers)
+        if code == 200 then
+          Debug("Command successful: " .. data)
+          Controls.last_response.String = data
+        else
+          local err_msg = error or "Unknown error"
+          Debug("Command failed: " .. err_msg)
+          Controls.last_response.String = "Error: " .. err_msg
+          
+          if code == 0 or code == nil then
+            is_connected = false
+            UpdateStatus(2, "Connection lost")
+            Controls.connect.Boolean = false
+            if auto_reconnect then
+              ScheduleReconnect()
+            end
+          end
+        end
+      end
+    }
+  end
+  
+  -- Connection Control
+  Controls.connect.EventHandler = function()
+    if Controls.connect.Boolean then
+      Connect()
+    else
+      Disconnect()
+    end
+  end
+  
+  -- System Commands
+  Controls.shutdown.EventHandler = function()
+    local time = tonumber(Controls.shutdown_time.String) or 1
+    SendCommand({ command = "shutdown", time = time })
+  end
+  
+  Controls.shutdown_cancel.EventHandler = function()
+    SendCommand({ command = "shutdown_cancel" })
+  end
+  
+  Controls.reboot.EventHandler = function()
+    SendCommand({ command = "reboot" })
+  end
+  
+  Controls.lock.EventHandler = function()
+    SendCommand({ command = "lock" })
+  end
+  
+  -- Script Execution
+  Controls.run_script.EventHandler = function()
+    local script = Controls.script_path.String
+    local args = Controls.script_args.String
+    local stdin = Controls.script_stdin.String
+    
+    if script == "" then
+      UpdateStatus(2, "Script path cannot be empty")
+      return
+    end
+    
+    local cmd_data = { command = "runScript", scriptPath = script }
+    if args ~= "" then
+      cmd_data.args = args
+    end
+    if stdin ~= "" then
+      cmd_data.stdin = stdin
+    end
+    
+    SendCommand(cmd_data)
+  end
+  
+  -- Alert System
+  Controls.send_alert.EventHandler = function()
+    local message = Controls.alert_message.String
+    
+    if message == "" then
+      UpdateStatus(2, "Alert message cannot be empty")
+      return
+    end
+    
+    SendCommand({ command = "sendAlert", message = message })
+  end
+  
+  -- System Info
+  Controls.get_system_info.EventHandler = function()
+    SendCommand({ command = "getSystemInfo" })
+  end
+  
+  Controls.get_fonts.EventHandler = function()
+    SendCommand({ command = "getFonts" })
+  end
+  
+  -- App Control
+  Controls.focus_app.EventHandler = function()
+    local app = Controls.app_name.String
+    
+    if app == "" then
+      UpdateStatus(2, "App name cannot be empty")
+      return
+    end
+    
+    SendCommand({ command = "focusApp", appName = app })
+  end
+  
+  Controls.quit_app.EventHandler = function()
+    local app = Controls.app_name.String
+    
+    if app == "" then
+      UpdateStatus(2, "App name cannot be empty")
+      return
+    end
+    
+    SendCommand({ command = "quitApp", appName = app })
+  end
+  
+  -- Input Commands
+  Controls.send_input.EventHandler = function()
+    local input_type = Controls.input_type.String
+    local input_key = Controls.input_key.String
+    
+    if input_type == "" or input_key == "" then
+      UpdateStatus(2, "Input type and key cannot be empty")
+      return
+    end
+    
+    SendCommand({ command = "sendInput", type = input_type, key = input_key })
+  end
+  
+  -- File Commands
+  Controls.move_file.EventHandler = function()
+    local source = Controls.file_source.String
+    local dest = Controls.file_dest.String
+    local copy_only = Controls.file_copy_only.Boolean
+    
+    if source == "" or dest == "" then
+      UpdateStatus(2, "Source and destination paths required")
+      return
+    end
+    
+    SendCommand({ command = "moveFile", sourcePath = source, destPath = dest, copyOnly = copy_only })
+  end
+  
+  -- Custom Command
+  Controls.send_custom.EventHandler = function()
+    local command = Controls.custom_command.String
+    local json_str = Controls.custom_json.String
+    
+    if command == "" then
+      UpdateStatus(2, "Command cannot be empty")
+      return
+    end
+    
+    -- If JSON provided, use it directly with password appended
+    if json_str ~= "" and json_str:sub(1,1) == "{" then
+      -- Trim whitespace and ensure it ends with }
+      json_str = json_str:match("^%s*(.-)%s*$")
+      if json_str:sub(-1) ~= "}" then
+        UpdateStatus(2, "Invalid JSON format - must end with }")
+        return
+      end
+      local json_with_password = json_str:sub(1, -2) .. ',"password":"' .. password .. '"}'
+      
+      local url = HttpClient.CreateUrl({
+        Host = host,
+        Port = port,
+        Path = "command"
+      })
+      
+      HttpClient.Upload {
+        Url = url,
+        Headers = { ["Content-Type"] = "application/json" },
+        Method = "POST",
+        Data = json_with_password,
+        Timeout = 10,
+        EventHandler = function(tbl, code, data, error, headers)
+          if code == 200 then
+            Controls.last_response.String = data
+          else
+            Controls.last_response.String = "Error: " .. (error or "Unknown")
+          end
+        end
+      }
+    else
+      SendCommand({ command = command })
+    end
+  end
+  
+  -- Preset Command Buttons
+  for i = 1, Properties["Command Buttons"].Value do
+    Controls["cmd_" .. i .. "_trigger"].EventHandler = function()
+      local json_str = Controls["cmd_" .. i .. "_json"].String
+      
+      if json_str == "" then
+        UpdateStatus(2, "Command " .. i .. " JSON cannot be empty")
+        return
+      end
+      
+      if json_str:sub(1,1) == "{" then
+        -- Trim whitespace and ensure it ends with }
+        json_str = json_str:match("^%s*(.-)%s*$")
+        if json_str:sub(-1) ~= "}" then
+          UpdateStatus(2, "Invalid JSON for command " .. i .. " - must end with }")
+          return
+        end
+        local json_with_password = json_str:sub(1, -2) .. ',"password":"' .. password .. '"}'
+        
+        local url = HttpClient.CreateUrl({
+          Host = host,
+          Port = port,
+          Path = "command"
+        })
+        
+        HttpClient.Upload {
+          Url = url,
+          Headers = { ["Content-Type"] = "application/json" },
+          Method = "POST",
+          Data = json_with_password,
+          Timeout = 10,
+          EventHandler = function(tbl, code, data, error, headers)
+            if code == 200 then
+              Controls.last_response.String = data
+            else
+              Controls.last_response.String = "Error: " .. (error or "Unknown")
+            end
+          end
+        }
+      else
+        UpdateStatus(2, "Invalid JSON for command " .. i)
+      end
+    end
+  end
+  
+  -- Command Dropdown Execution
+  Controls.execute_dropdown.EventHandler = function()
+    local selected_command = Controls.command_dropdown.String
+    
+    -- Skip if a category header is selected
+    if selected_command:sub(1, 3) == "---" then
+      UpdateStatus(2, "Please select a command, not a category")
+      return
+    end
+    
+    if selected_command == "" then
+      UpdateStatus(2, "Please select a command from the dropdown")
+      return
+    end
+    
+    -- Get parameter values
+    local param1 = Controls.dropdown_param1.String
+    local param2 = Controls.dropdown_param2.String
+    local param3 = Controls.dropdown_param3.String
+    
+    -- Build command data based on selected command
+    local cmd_data = { command = selected_command }
+    local params = command_params[selected_command] or {}
+    
+    -- Map parameters based on command requirements
+    if #params > 0 and param1 ~= "" then
+      -- Special handling for numeric parameters
+      if selected_command == "shutdown" then
+        cmd_data[params[1]] = tonumber(param1) or 1
+      else
+        cmd_data[params[1]] = param1
+      end
+    end
+    if #params > 1 and param2 ~= "" then
+      -- Special handling for numeric parameters
+      if selected_command == "moveFileBasedOnSize" then
+        cmd_data[params[2]] = tonumber(param2) or 0
+      elseif selected_command == "sendInput" then
+        cmd_data[params[2]] = param2
+      else
+        cmd_data[params[2]] = param2
+      end
+    end
+    if #params > 2 and param3 ~= "" then
+      -- Special handling for boolean parameters
+      if selected_command == "moveFile" then
+        cmd_data[params[3]] = (param3 == "true" or param3 == "1" or param3 == "yes")
+      else
+        cmd_data[params[3]] = param3
+      end
+    end
+    
+    SendCommand(cmd_data)
+  end
+  
+  -- Initialize
+  UpdateStatus(5, "Initialized - Ready to connect")
+  
+  -- Display persistent settings from Properties
+  Controls.host_display.String = host
+  Controls.port_display.String = tostring(port)
+  
+  -- Initialize other controls
+  Controls.shutdown_time.String = "1"
+  
+  -- Initialize command dropdown with choices
+  Controls.command_dropdown.Choices = command_choices
+  Controls.command_dropdown.String = ""
+  
+  Debug("ScriptLauncher Control Plugin Initialized")
+  Debug("Host: " .. host .. ":" .. tostring(port))
+end
