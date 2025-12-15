@@ -1,0 +1,1107 @@
+-- ScriptLauncher Control Plugin for Q-SYS
+-- Version:  1.0.0
+-- Description: Control remote ScriptLauncher
+-- Author:   HLD
+
+PluginInfo = {
+  Name = "PKE~ScriptLauncherControl",
+  Version = "1.0.0",
+  BuildVersion = "1.0.0.0",
+  Id = "scriptlauncher. control. v1",
+  Author = "HLD",
+  Description = "Control ScriptLauncher"
+}
+
+-- Define the color of the plugin object in the design
+function GetColor(props)
+  return { 102, 102, 102 }
+end
+
+-- The name that will initially display when dragged into a design
+function GetPrettyName(props)
+  return "ScriptLauncher Control v" .. PluginInfo.Version
+end
+
+-- Define User Properties
+function GetProperties()
+  local props = {
+    {
+      Name = "Auto Reconnect",
+      Type = "boolean",
+      Value = true
+    },
+    {
+      Name = "Command Buttons",
+      Type = "integer",
+      Min = 1,
+      Max = 20,
+      Value = 5
+    },
+    {
+      Name = "Debug",
+      Type = "boolean",
+      Value = false
+    }
+  }
+  return props
+end
+
+-- Defines the Controls used within the plugin
+function GetControls(props)
+  local ctrls = {
+    -- Connection Controls
+    {
+      Name = "host",
+      ControlType = "Text",
+      PinStyle = "Input",
+      Count = 1,
+      UserPin = true
+    },
+    {
+      Name = "port",
+      ControlType = "Text",
+      PinStyle = "Input",
+      Count = 1,
+      UserPin = true
+    },
+    {
+      Name = "password",
+      ControlType = "Text",
+      PinStyle = "Input",
+      Count = 1,
+      UserPin = true
+    },
+    {
+      Name = "connect",
+      ControlType = "Button",
+      ButtonType = "Toggle",
+      Count = 1,
+      UserPin = true
+    },
+    {
+      Name = "connection_status",
+      ControlType = "Indicator",
+      IndicatorType = "Status",
+      PinStyle = "Output",
+      Count = 1,
+      UserPin = true
+    },
+    {
+      Name = "status_text",
+      ControlType = "Text",
+      PinStyle = "Output",
+      Count = 1,
+      UserPin = true
+    },
+    {
+      Name = "remote_hostname",
+      ControlType = "Text",
+      PinStyle = "Output",
+      Count = 1,
+      UserPin = true
+    },
+    {
+      Name = "remote_version",
+      ControlType = "Text",
+      PinStyle = "Output",
+      Count = 1,
+      UserPin = true
+    },
+    {
+      Name = "remote_platform",
+      ControlType = "Text",
+      PinStyle = "Output",
+      Count = 1,
+      UserPin = true
+    },
+    {
+      Name = "remote_uptime",
+      ControlType = "Text",
+      PinStyle = "Output",
+      Count = 1,
+      UserPin = true
+    },
+    -- System Commands
+    {
+      Name = "shutdown",
+      ControlType = "Button",
+      ButtonType = "Trigger",
+      Count = 1,
+      UserPin = true
+    },
+    {
+      Name = "shutdown_time",
+      ControlType = "Text",
+      PinStyle = "Input",
+      Count = 1,
+      UserPin = true
+    },
+    {
+      Name = "reboot",
+      ControlType = "Button",
+      ButtonType = "Trigger",
+      Count = 1,
+      UserPin = true
+    },
+    {
+      Name = "lock",
+      ControlType = "Button",
+      ButtonType = "Trigger",
+      Count = 1,
+      UserPin = true
+    },
+    -- Script Execution
+    {
+      Name = "run_script",
+      ControlType = "Button",
+      ButtonType = "Trigger",
+      Count = 1,
+      UserPin = true
+    },
+    {
+      Name = "script_path",
+      ControlType = "Text",
+      PinStyle = "Input",
+      Count = 1,
+      UserPin = true
+    },
+    {
+      Name = "script_args",
+      ControlType = "Text",
+      PinStyle = "Input",
+      Count = 1,
+      UserPin = true
+    },
+    -- Alert System
+    {
+      Name = "send_alert",
+      ControlType = "Button",
+      ButtonType = "Trigger",
+      Count = 1,
+      UserPin = true
+    },
+    {
+      Name = "alert_message",
+      ControlType = "Text",
+      PinStyle = "Input",
+      Count = 1,
+      UserPin = true
+    },
+    -- System Info
+    {
+      Name = "get_system_info",
+      ControlType = "Button",
+      ButtonType = "Trigger",
+      Count = 1,
+      UserPin = true
+    },
+    {
+      Name = "system_info",
+      ControlType = "Text",
+      PinStyle = "Output",
+      Count = 1,
+      UserPin = true
+    },
+    -- App Control
+    {
+      Name = "focus_app",
+      ControlType = "Button",
+      ButtonType = "Trigger",
+      Count = 1,
+      UserPin = true
+    },
+    {
+      Name = "app_name",
+      ControlType = "Text",
+      PinStyle = "Input",
+      Count = 1,
+      UserPin = true
+    },
+    {
+      Name = "quit_app",
+      ControlType = "Button",
+      ButtonType = "Trigger",
+      Count = 1,
+      UserPin = true
+    },
+    -- Custom Command
+    {
+      Name = "custom_command",
+      ControlType = "Text",
+      PinStyle = "Input",
+      Count = 1,
+      UserPin = true
+    },
+    {
+      Name = "custom_json",
+      ControlType = "Text",
+      PinStyle = "Input",
+      Count = 1,
+      UserPin = true
+    },
+    {
+      Name = "send_custom",
+      ControlType = "Button",
+      ButtonType = "Trigger",
+      Count = 1,
+      UserPin = true
+    },
+    -- Response
+    {
+      Name = "last_response",
+      ControlType = "Text",
+      PinStyle = "Output",
+      Count = 1,
+      UserPin = true
+    }
+  }
+  
+  -- Add custom command buttons
+  for i = 1, props["Command Buttons"].Value do
+    table.insert(ctrls, {
+      Name = "cmd_" .. i .. "_trigger",
+      ControlType = "Button",
+      ButtonType = "Trigger",
+      Count = 1,
+      UserPin = true
+    })
+    table.insert(ctrls, {
+      Name = "cmd_" .. i .. "_name",
+      ControlType = "Text",
+      PinStyle = "Input",
+      Count = 1,
+      UserPin = true
+    })
+    table.insert(ctrls, {
+      Name = "cmd_" .. i .. "_json",
+      ControlType = "Text",
+      PinStyle = "Input",
+      Count = 1,
+      UserPin = true
+    })
+  end
+  
+  return ctrls
+end
+
+-- Layout of controls and graphics for the plugin UI
+function GetControlLayout(props)
+  local layout = {}
+  local graphics = {}
+  
+  -- Connection Section
+  local y_pos = 5
+  graphics[#graphics + 1] = {
+    Type = "GroupBox",
+    Fill = {102, 102, 102},
+    StrokeWidth = 1,
+    Position = {5, y_pos},
+    Size = {460, 130}
+  }
+  graphics[#graphics + 1] = {
+    Type = "Text",
+    Text = "Connection Settings",
+    Font = "Roboto",
+    FontSize = 12,
+    FontStyle = "Bold",
+    Position = {10, y_pos + 5},
+    Size = {200, 16}
+  }
+  
+  graphics[#graphics + 1] = {
+    Type = "Text",
+    Text = "Host/IP:",
+    Font = "Roboto",
+    FontSize = 10,
+    Position = {10, y_pos + 28},
+    Size = {60, 16},
+    HTextAlign = "Right"
+  }
+  
+  layout["host"] = {
+    PrettyName = "Host/IP Address",
+    Style = "Text",
+    Position = {75, y_pos + 25},
+    Size = {150, 20}
+  }
+  
+  graphics[#graphics + 1] = {
+    Type = "Text",
+    Text = "Port:",
+    Font = "Roboto",
+    FontSize = 10,
+    Position = {230, y_pos + 28},
+    Size = {40, 16},
+    HTextAlign = "Right"
+  }
+  
+  layout["port"] = {
+    PrettyName = "Port",
+    Style = "Text",
+    Position = {275, y_pos + 25},
+    Size = {60, 20}
+  }
+  
+  graphics[#graphics + 1] = {
+    Type = "Text",
+    Text = "Password:",
+    Font = "Roboto",
+    FontSize = 10,
+    Position = {10, y_pos + 53},
+    Size = {60, 16},
+    HTextAlign = "Right"
+  }
+  
+  layout["password"] = {
+    PrettyName = "Password",
+    Style = "Text",
+    Position = {75, y_pos + 50},
+    Size = {260, 20}
+  }
+  
+  layout["connect"] = {
+    PrettyName = "Connect",
+    Style = "Button",
+    Legend = "Connect",
+    Color = {0, 255, 0},
+    OffColor = {200, 0, 0},
+    UnlinkOffColor = true,
+    Position = {340, y_pos + 25},
+    Size = {110, 45}
+  }
+  
+  layout["connection_status"] = {
+    PrettyName = "Connection Status",
+    Style = "Indicator",
+    Position = {10, y_pos + 80},
+    Size = {50, 20}
+  }
+  
+  layout["status_text"] = {
+    PrettyName = "Status",
+    Style = "Text",
+    Position = {65, y_pos + 80},
+    Size = {385, 20}
+  }
+  
+  layout["remote_hostname"] = {
+    PrettyName = "Hostname",
+    Style = "Text",
+    Position = {10, y_pos + 105},
+    Size = {110, 20}
+  }
+  
+  layout["remote_version"] = {
+    PrettyName = "Version",
+    Style = "Text",
+    Position = {125, y_pos + 105},
+    Size = {100, 20}
+  }
+  
+  layout["remote_platform"] = {
+    PrettyName = "Platform",
+    Style = "Text",
+    Position = {230, y_pos + 105},
+    Size = {110, 20}
+  }
+  
+  layout["remote_uptime"] = {
+    PrettyName = "Uptime",
+    Style = "Text",
+    Position = {345, y_pos + 105},
+    Size = {105, 20}
+  }
+  
+  -- System Commands Section
+  y_pos = 145
+  graphics[#graphics + 1] = {
+    Type = "GroupBox",
+    Fill = {102, 102, 102},
+    StrokeWidth = 1,
+    Position = {5, y_pos},
+    Size = {460, 90}
+  }
+  graphics[#graphics + 1] = {
+    Type = "Text",
+    Text = "System Commands",
+    Font = "Roboto",
+    FontSize = 12,
+    FontStyle = "Bold",
+    Position = {10, y_pos + 5},
+    Size = {150, 16}
+  }
+  
+  layout["shutdown"] = {
+    PrettyName = "Shutdown",
+    Style = "Button",
+    Legend = "Shutdown",
+    Position = {10, y_pos + 25},
+    Size = {80, 25}
+  }
+  
+  layout["shutdown_time"] = {
+    PrettyName = "Shutdown Time (min)",
+    Style = "Text",
+    Position = {95, y_pos + 25},
+    Size = {60, 25}
+  }
+  
+  layout["reboot"] = {
+    PrettyName = "Reboot",
+    Style = "Button",
+    Legend = "Reboot",
+    Position = {160, y_pos + 25},
+    Size = {80, 25}
+  }
+  
+  layout["lock"] = {
+    PrettyName = "Lock",
+    Style = "Button",
+    Legend = "Lock",
+    Position = {245, y_pos + 25},
+    Size = {80, 25}
+  }
+  
+  layout["get_system_info"] = {
+    PrettyName = "Get System Info",
+    Style = "Button",
+    Legend = "Get Info",
+    Position = {10, y_pos + 55},
+    Size = {80, 25}
+  }
+  
+  layout["system_info"] = {
+    PrettyName = "System Info",
+    Style = "Text",
+    Position = {95, y_pos + 55},
+    Size = {360, 25}
+  }
+  
+  -- Script Execution Section
+  y_pos = 245
+  graphics[#graphics + 1] = {
+    Type = "GroupBox",
+    Fill = {102, 102, 102},
+    StrokeWidth = 1,
+    Position = {5, y_pos},
+    Size = {460, 90}
+  }
+  graphics[#graphics + 1] = {
+    Type = "Text",
+    Text = "Script Execution",
+    Font = "Roboto",
+    FontSize = 12,
+    FontStyle = "Bold",
+    Position = {10, y_pos + 5},
+    Size = {150, 16}
+  }
+  
+  layout["script_path"] = {
+    PrettyName = "Script Path",
+    Style = "Text",
+    Position = {10, y_pos + 25},
+    Size = {340, 25}
+  }
+  
+  layout["script_args"] = {
+    PrettyName = "Arguments",
+    Style = "Text",
+    Position = {10, y_pos + 55},
+    Size = {340, 25}
+  }
+  
+  layout["run_script"] = {
+    PrettyName = "Run Script",
+    Style = "Button",
+    Legend = "Run",
+    Position = {355, y_pos + 25},
+    Size = {100, 55}
+  }
+  
+  -- Alert Section
+  y_pos = 345
+  graphics[#graphics + 1] = {
+    Type = "GroupBox",
+    Fill = {102, 102, 102},
+    StrokeWidth = 1,
+    Position = {5, y_pos},
+    Size = {460, 60}
+  }
+  graphics[#graphics + 1] = {
+    Type = "Text",
+    Text = "Send Alert",
+    Font = "Roboto",
+    FontSize = 12,
+    FontStyle = "Bold",
+    Position = {10, y_pos + 5},
+    Size = {150, 16}
+  }
+  
+  layout["alert_message"] = {
+    PrettyName = "Alert Message",
+    Style = "Text",
+    Position = {10, y_pos + 25},
+    Size = {340, 25}
+  }
+  
+  layout["send_alert"] = {
+    PrettyName = "Send Alert",
+    Style = "Button",
+    Legend = "Send",
+    Position = {355, y_pos + 25},
+    Size = {100, 25}
+  }
+  
+  -- App Control Section
+  y_pos = 415
+  graphics[#graphics + 1] = {
+    Type = "GroupBox",
+    Fill = {102, 102, 102},
+    StrokeWidth = 1,
+    Position = {5, y_pos},
+    Size = {460, 60}
+  }
+  graphics[#graphics + 1] = {
+    Type = "Text",
+    Text = "Application Control",
+    Font = "Roboto",
+    FontSize = 12,
+    FontStyle = "Bold",
+    Position = {10, y_pos + 5},
+    Size = {150, 16}
+  }
+  
+  layout["app_name"] = {
+    PrettyName = "App Name",
+    Style = "Text",
+    Position = {10, y_pos + 25},
+    Size = {200, 25}
+  }
+  
+  layout["focus_app"] = {
+    PrettyName = "Focus App",
+    Style = "Button",
+    Legend = "Focus",
+    Position = {215, y_pos + 25},
+    Size = {70, 25}
+  }
+  
+  layout["quit_app"] = {
+    PrettyName = "Quit App",
+    Style = "Button",
+    Legend = "Quit",
+    Position = {290, y_pos + 25},
+    Size = {70, 25}
+  }
+  
+  -- Custom Command Section
+  y_pos = 485
+  graphics[#graphics + 1] = {
+    Type = "GroupBox",
+    Fill = {102, 102, 102},
+    StrokeWidth = 1,
+    Position = {5, y_pos},
+    Size = {460, 90}
+  }
+  graphics[#graphics + 1] = {
+    Type = "Text",
+    Text = "Custom Command",
+    Font = "Roboto",
+    FontSize = 12,
+    FontStyle = "Bold",
+    Position = {10, y_pos + 5},
+    Size = {150, 16}
+  }
+  
+  layout["custom_command"] = {
+    PrettyName = "Command",
+    Style = "Text",
+    Position = {10, y_pos + 25},
+    Size = {340, 25}
+  }
+  
+  layout["custom_json"] = {
+    PrettyName = "JSON Parameters",
+    Style = "Text",
+    Position = {10, y_pos + 55},
+    Size = {340, 25}
+  }
+  
+  layout["send_custom"] = {
+    PrettyName = "Send Custom",
+    Style = "Button",
+    Legend = "Send",
+    Position = {355, y_pos + 25},
+    Size = {100, 55}
+  }
+  
+  -- Command Buttons Section
+  y_pos = 585
+  graphics[#graphics + 1] = {
+    Type = "GroupBox",
+    Fill = {102, 102, 102},
+    StrokeWidth = 1,
+    Position = {5, y_pos},
+    Size = {460, 30 + (props["Command Buttons"].Value * 30)}
+  }
+  graphics[#graphics + 1] = {
+    Type = "Text",
+    Text = "Preset Commands",
+    Font = "Roboto",
+    FontSize = 12,
+    FontStyle = "Bold",
+    Position = {10, y_pos + 5},
+    Size = {150, 16}
+  }
+  
+  for i = 1, props["Command Buttons"].Value do
+    local button_y = y_pos + 25 + ((i - 1) * 30)
+    
+    layout["cmd_" .. i .. "_trigger"] = {
+      PrettyName = "Trigger " .. i,
+      Style = "Button",
+      Legend = "Run",
+      Position = {10, button_y},
+      Size = {60, 25}
+    }
+    
+    layout["cmd_" .. i .. "_name"] = {
+      PrettyName = "Name " .. i,
+      Style = "Text",
+      Position = {75, button_y},
+      Size = {150, 25}
+    }
+    
+    layout["cmd_" .. i .. "_json"] = {
+      PrettyName = "JSON " .. i,
+      Style = "Text",
+      Position = {230, button_y},
+      Size = {225, 25}
+    }
+  end
+  
+  -- Response Section
+  y_pos = 625 + (props["Command Buttons"]. Value * 30)
+  graphics[#graphics + 1] = {
+    Type = "GroupBox",
+    Fill = {102, 102, 102},
+    StrokeWidth = 1,
+    Position = {5, y_pos},
+    Size = {460, 60}
+  }
+  graphics[#graphics + 1] = {
+    Type = "Text",
+    Text = "Last Response",
+    Font = "Roboto",
+    FontSize = 12,
+    FontStyle = "Bold",
+    Position = {10, y_pos + 5},
+    Size = {150, 16}
+  }
+  
+  layout["last_response"] = {
+    PrettyName = "Response",
+    Style = "Text",
+    Position = {10, y_pos + 25},
+    Size = {445, 25}
+  }
+  
+  return layout, graphics
+end
+
+-- Start of the Runtime
+if Controls then
+  -- Simple JSON string builder (no library needed)
+  local function BuildJsonString(tbl)
+    local pairs_list = {}
+    for k, v in pairs(tbl) do
+      local value_str
+      if type(v) == "string" then
+        -- Escape quotes and backslashes
+        value_str = '"' .. v:gsub('\\', '\\\\'):gsub('"', '\\"') .. '"'
+      elseif type(v) == "number" then
+        value_str = tostring(v)
+      elseif type(v) == "boolean" then
+        value_str = tostring(v)
+      else
+        value_str = '""'
+      end
+      table.insert(pairs_list, '"' .. k .. '":' .. value_str)
+    end
+    return "{" .. table.concat(pairs_list, ",") .. "}"
+  end
+  
+  -- Variables
+  local auto_reconnect = Properties["Auto Reconnect"]. Value
+  local debug = Properties["Debug"].Value
+  
+  local is_connected = false
+  local reconnect_timer = nil
+  local keepalive_timer = nil
+  
+  -- Helper Functions
+  local function Debug(msg)
+    if debug then
+      print("[ScriptLauncher] " .. msg)
+    end
+  end
+  
+  local function UpdateStatus(state, message)
+    Controls.connection_status.Value = state
+    Controls.status_text.String = message
+    Debug("Status:  " .. message)
+  end
+  
+  local function GetHost()
+    return Controls.host.String
+  end
+  
+  local function GetPort()
+    return tonumber(Controls.port.String) or 8810
+  end
+  
+  local function GetPassword()
+    return Controls.password.String
+  end
+  
+  function Connect()
+    local host = GetHost()
+    local port = GetPort()
+    
+    if host == "" then
+      UpdateStatus(2, "Host/IP address required")
+      Controls.connect.Boolean = false
+      return
+    end
+    
+    if reconnect_timer then
+      reconnect_timer:Stop()
+      reconnect_timer = nil
+    end
+    
+    UpdateStatus(5, "Connecting to " .. host .. ":" .. port)
+    Debug("Initiating connection...")
+    
+    -- Test connection with /commands endpoint
+    local url = HttpClient.CreateUrl({
+      Host = host,
+      Port = port,
+      Path = "commands"
+    })
+    
+    HttpClient.Download {
+      Url = url,
+      Timeout = 5,
+      EventHandler = function(tbl, code, data, error, headers)
+        if code == 200 then
+          is_connected = true
+          UpdateStatus(0, "Connected")
+          Controls.remote_hostname.String = host
+          Controls.remote_platform.String = "REST API"
+          Controls.remote_version.String = "Connected"
+          Controls.remote_uptime.String = "Online"
+          
+          -- Start keep-alive monitor
+          if keepalive_timer then
+            keepalive_timer:Stop()
+          end
+          
+          keepalive_timer = Timer.New()
+          keepalive_timer. EventHandler = function()
+            if is_connected then
+              HttpClient.Download {
+                Url = url,
+                Timeout = 3,
+                EventHandler = function(tbl, code, data, error, headers)
+                  if code == 200 then
+                    Controls.remote_uptime.String = "Online"
+                    if Controls.connection_status.Value ~= 0 then
+                      UpdateStatus(0, "Connected")
+                    end
+                  else
+                    UpdateStatus(2, "Keep-alive failed")
+                    is_connected = false
+                    Controls.connect.Boolean = false
+                    if auto_reconnect then
+                      ScheduleReconnect()
+                    end
+                  end
+                end
+              }
+            end
+          end
+          keepalive_timer: Start(10)
+          
+        else
+          UpdateStatus(2, "Connection failed:  " .. (error or "Unknown error"))
+          Controls.connect.Boolean = false
+          if auto_reconnect then
+            ScheduleReconnect()
+          end
+        end
+      end
+    }
+  end
+  
+  function ScheduleReconnect()
+    if reconnect_timer then
+      reconnect_timer:Stop()
+    end
+    
+    reconnect_timer = Timer.New()
+    reconnect_timer.EventHandler = function()
+      if Controls.connect.Boolean then
+        Debug("Attempting reconnect...")
+        Connect()
+      end
+    end
+    reconnect_timer:Start(5)
+  end
+  
+  function Disconnect()
+    if keepalive_timer then
+      keepalive_timer:Stop()
+      keepalive_timer = nil
+    end
+    
+    if reconnect_timer then
+      reconnect_timer:Stop()
+      reconnect_timer = nil
+    end
+    
+    is_connected = false
+    UpdateStatus(5, "Disconnected")
+    Controls.remote_hostname.String = ""
+    Controls.remote_version.String = ""
+    Controls. remote_platform.String = ""
+    Controls. remote_uptime.String = ""
+    Debug("Disconnected")
+  end
+  
+  local function SendCommand(command_data)
+    if not is_connected then
+      UpdateStatus(2, "Not connected")
+      return
+    end
+    
+    local host = GetHost()
+    local port = GetPort()
+    local password = GetPassword()
+    
+    -- Add password to command
+    command_data.password = password
+    
+    local json_data = BuildJsonString(command_data)
+    Debug("Sending:  " .. json_data)
+    
+    local url = HttpClient.CreateUrl({
+      Host = host,
+      Port = port,
+      Path = "command"
+    })
+    
+    HttpClient.Upload {
+      Url = url,
+      Headers = {
+        ["Content-Type"] = "application/json"
+      },
+      Method = "POST",
+      Data = json_data,
+      Timeout = 10,
+      EventHandler = function(tbl, code, data, error, headers)
+        if code == 200 then
+          Debug("Command successful:  " .. data)
+          Controls.last_response.String = data
+        else
+          local err_msg = error or "Unknown error"
+          Debug("Command failed: " .. err_msg)
+          Controls.last_response.String = "Error: " .. err_msg
+          
+          if code == 0 or code == nil then
+            is_connected = false
+            UpdateStatus(2, "Connection lost")
+            Controls.connect.Boolean = false
+            if auto_reconnect then
+              ScheduleReconnect()
+            end
+          end
+        end
+      end
+    }
+  end
+  
+  -- Connection Control
+  Controls.connect.EventHandler = function()
+    if Controls.connect.Boolean then
+      Connect()
+    else
+      Disconnect()
+    end
+  end
+  
+  -- System Commands
+  Controls.shutdown.EventHandler = function()
+    local time = tonumber(Controls.shutdown_time.String) or 1
+    SendCommand({ command = "shutdown", time = time })
+  end
+  
+  Controls.reboot.EventHandler = function()
+    SendCommand({ command = "reboot" })
+  end
+  
+  Controls.lock.EventHandler = function()
+    SendCommand({ command = "lock" })
+  end
+  
+  -- Script Execution
+  Controls.run_script.EventHandler = function()
+    local script = Controls.script_path.String
+    local args = Controls.script_args.String
+    
+    if script == "" then
+      UpdateStatus(2, "Script path cannot be empty")
+      return
+    end
+    
+    local cmd_data = { command = "runScript", scriptPath = script }
+    if args ~= "" then
+      cmd_data.args = args
+    end
+    
+    SendCommand(cmd_data)
+  end
+  
+  -- Alert System
+  Controls.send_alert. EventHandler = function()
+    local message = Controls.alert_message. String
+    
+    if message == "" then
+      UpdateStatus(2, "Alert message cannot be empty")
+      return
+    end
+    
+    SendCommand({ command = "sendAlert", message = message })
+  end
+  
+  -- System Info
+  Controls.get_system_info.EventHandler = function()
+    SendCommand({ command = "getSystemInfo" })
+  end
+  
+  -- App Control
+  Controls.focus_app.EventHandler = function()
+    local app = Controls.app_name.String
+    
+    if app == "" then
+      UpdateStatus(2, "App name cannot be empty")
+      return
+    end
+    
+    SendCommand({ command = "focusApp", appName = app })
+  end
+  
+  Controls.quit_app.EventHandler = function()
+    local app = Controls.app_name. String
+    
+    if app == "" then
+      UpdateStatus(2, "App name cannot be empty")
+      return
+    end
+    
+    SendCommand({ command = "quitApp", appName = app })
+  end
+  
+  -- Custom Command
+  Controls.send_custom.EventHandler = function()
+    local command = Controls.custom_command.String
+    local json_str = Controls.custom_json.String
+    
+    if command == "" then
+      UpdateStatus(2, "Command cannot be empty")
+      return
+    end
+    
+    local host = GetHost()
+    local port = GetPort()
+    local password = GetPassword()
+    
+    -- If JSON provided, use it directly with password appended
+    if json_str ~= "" and json_str: sub(1,1) == "{" then
+      local json_with_password = json_str: sub(1, -2) .. ',"password":"' .. password .. '"}'
+      
+      local url = HttpClient.CreateUrl({
+        Host = host,
+        Port = port,
+        Path = "command"
+      })
+      
+      HttpClient.Upload {
+        Url = url,
+        Headers = { ["Content-Type"] = "application/json" },
+        Method = "POST",
+        Data = json_with_password,
+        Timeout = 10,
+        EventHandler = function(tbl, code, data, error, headers)
+          if code == 200 then
+            Controls.last_response.String = data
+          else
+            Controls.last_response.String = "Error: " .. (error or "Unknown")
+          end
+        end
+      }
+    else
+      SendCommand({ command = command })
+    end
+  end
+  
+  -- Preset Command Buttons
+  for i = 1, Properties["Command Buttons"].Value do
+    Controls["cmd_" .. i .. "_trigger"].EventHandler = function()
+      local json_str = Controls["cmd_" .. i .. "_json"].String
+      
+      if json_str == "" then
+        UpdateStatus(2, "Command " .. i .. " JSON cannot be empty")
+        return
+      end
+      
+      local host = GetHost()
+      local port = GetPort()
+      local password = GetPassword()
+      
+      if json_str:sub(1,1) == "{" then
+        local json_with_password = json_str:sub(1, -2) .. ',"password":"' .. password .. '"}'
+        
+        local url = HttpClient.CreateUrl({
+          Host = host,
+          Port = port,
+          Path = "command"
+        })
+        
+        HttpClient.Upload {
+          Url = url,
+          Headers = { ["Content-Type"] = "application/json" },
+          Method = "POST",
+          Data = json_with_password,
+          Timeout = 10,
+          EventHandler = function(tbl, code, data, error, headers)
+            if code == 200 then
+              Controls.last_response.String = data
+            else
+              Controls.last_response.String = "Error: " .. (error or "Unknown")
+            end
+          end
+        }
+      else
+        UpdateStatus(2, "Invalid JSON for command " .. i)
+      end
+    end
+  end
+  
+  -- Initialize
+  UpdateStatus(5, "Initialized - Ready to connect")
+  Controls.host.String = "192.168.1.100"
+  Controls.port.String = "8810"
+  Controls.password.String = ""
+  Controls.shutdown_time.String = "1"
+  Debug("ScriptLauncher Control Plugin Initialized")
+end
