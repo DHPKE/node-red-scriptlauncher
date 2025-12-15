@@ -1300,20 +1300,23 @@ if Controls then
     
     -- Map parameters based on command requirements
     if #params > 0 and param1 ~= "" then
-      cmd_data[params[1]] = param1
+      -- Special handling for numeric parameters
+      if selected_command == "shutdown" then
+        cmd_data[params[1]] = tonumber(param1) or 1
+      else
+        cmd_data[params[1]] = param1
+      end
     end
     if #params > 1 and param2 ~= "" then
-      cmd_data[params[2]] = param2
+      -- Special handling for numeric parameters
+      if selected_command == "moveFileBasedOnSize" then
+        cmd_data[params[2]] = tonumber(param2) or 0
+      else
+        cmd_data[params[2]] = param2
+      end
     end
     if #params > 2 and param3 ~= "" then
       cmd_data[params[3]] = param3
-    end
-    
-    -- Special handling for numeric parameters
-    if selected_command == "shutdown" and param1 ~= "" then
-      cmd_data.time = tonumber(param1) or 1
-    elseif selected_command == "moveFileBasedOnSize" and param2 ~= "" then
-      cmd_data.size = tonumber(param2) or 0
     end
     
     SendCommand(cmd_data)
@@ -1328,7 +1331,7 @@ if Controls then
   
   -- Initialize command dropdown with choices
   Controls.command_dropdown.Choices = command_choices
-  Controls.command_dropdown.String = command_choices[1]
+  Controls.command_dropdown.String = ""
   
   Debug("ScriptLauncher Control Plugin Initialized")
 end
