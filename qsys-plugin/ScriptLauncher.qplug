@@ -563,7 +563,7 @@ function GetControlLayout(props)
     Style = "Button",
     Legend = "Cancel",
     Position = {390, y_pos + 25},
-    Size = {65, 25}
+    Size = {60, 25}
   }
   
   layout["get_system_info"] = {
@@ -760,7 +760,7 @@ function GetControlLayout(props)
     Style = "Button",
     Legend = "Quit",
     Position = {375, y_pos + 25},
-    Size = {80, 25}
+    Size = {75, 25}
   }
   
   -- Input Commands Section
