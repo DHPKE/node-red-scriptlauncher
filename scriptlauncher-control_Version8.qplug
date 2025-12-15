@@ -35,7 +35,7 @@ function GetProperties()
       Type = "integer",
       Min = 1,
       Max = 20,
-      Value = 5
+      Value = 2
     },
     {
       Name = "Debug",
