@@ -31,14 +31,32 @@ A comprehensive Q-SYS Designer plugin (.qplug) that provides complete control ov
 
 **Features:**
 - Complete support for all ScriptLauncher command categories (System, Script, Input, UI, File, App)
+- **NEW: Command Selection dropdown** - Unified interface with all 20 commands in a single dropdown menu
 - REST API integration using HTTP POST requests
 - Dynamic parameter configuration based on command type
 - Real-time status indicators
 - Full integration with Q-SYS control pins for automation
+- Individual command buttons for quick access
+- Custom command support with JSON parameters
+- Configurable preset command buttons (1-20)
 
-**Installation & Usage:**
+**Installation:**
 
-See the [Q-SYS Plugin README](qsys-plugin/README.md) for detailed installation and usage instructions.
+1. Download `scriptlauncher-control_Version8.qplug`
+2. In Q-SYS Designer, go to Tools > Show Design Resources
+3. Right-click on "Plugins" and select "Import Plugin"
+4. Select the downloaded .qplug file
+5. Drag the "ScriptLauncher Control" plugin from the Schematic Elements pane into your design
+
+**Quick Start:**
+
+1. Configure connection settings (Host/IP, Port, Password)
+2. Click Connect button
+3. Use the new **Command Selection** dropdown to select any command
+4. Fill in required parameters
+5. Click Execute
+
+For detailed usage instructions, see [COMMAND_SELECTION_GUIDE.md](COMMAND_SELECTION_GUIDE.md)
 
 **Supported Commands:**
 - System: shutdown, shutdown_cancel, reboot, lock, getSystemInfo
