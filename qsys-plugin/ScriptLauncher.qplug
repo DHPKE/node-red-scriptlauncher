@@ -1,15 +1,15 @@
 -- ScriptLauncher Control Plugin for Q-SYS
--- Version: 2.0.0
+-- Version: 1.0.0
 -- Description: Control remote ScriptLauncher with persistent connection settings
--- Author: DHPKE
+-- Author: HLD
 
 PluginInfo = {
   Name = "PKE~ScriptLauncherControl",
-  Version = "2.0.0",
-  BuildVersion = "2.0.0.0",
-  Id = "scriptlauncher.control.v2",
-  Author = "DHPKE",
-  Description = "Control ScriptLauncher with persistent settings and full command support"
+  Version = "1.0.0",
+  BuildVersion = "1.0.0.0",
+  Id = "scriptlauncher.control.v1",
+  Author = "HLD",
+  Description = "Control ScriptLauncher"
 }
 
 -- Define the color of the plugin object in the design
@@ -52,7 +52,7 @@ function GetProperties()
       Type = "integer",
       Min = 1,
       Max = 20,
-      Value = 5
+      Value = 2
     },
     {
       Name = "Debug",
@@ -66,18 +66,22 @@ end
 -- Defines the Controls used within the plugin
 function GetControls(props)
   local ctrls = {
-    -- Connection Controls (display only - actual values from Properties)
+    -- Connection Controls (editable in UI)
     {
-      Name = "host_display",
+      Name = "host",
       ControlType = "Text",
-      PinStyle = "Output",
       Count = 1,
       UserPin = true
     },
     {
-      Name = "port_display",
+      Name = "port",
       ControlType = "Text",
-      PinStyle = "Output",
+      Count = 1,
+      UserPin = true
+    },
+    {
+      Name = "password",
+      ControlType = "Text",
       Count = 1,
       UserPin = true
     },
@@ -306,43 +310,6 @@ function GetControls(props)
       Count = 1,
       UserPin = true
     },
-    -- Command Selection Dropdown
-    {
-      Name = "command_dropdown",
-      ControlType = "Text",
-      ControlUnit = "Combo",
-      PinStyle = "Input",
-      Count = 1,
-      UserPin = true
-    },
-    {
-      Name = "dropdown_param1",
-      ControlType = "Text",
-      PinStyle = "Input",
-      Count = 1,
-      UserPin = true
-    },
-    {
-      Name = "dropdown_param2",
-      ControlType = "Text",
-      PinStyle = "Input",
-      Count = 1,
-      UserPin = true
-    },
-    {
-      Name = "dropdown_param3",
-      ControlType = "Text",
-      PinStyle = "Input",
-      Count = 1,
-      UserPin = true
-    },
-    {
-      Name = "execute_dropdown",
-      ControlType = "Button",
-      ButtonType = "Trigger",
-      Count = 1,
-      UserPin = true
-    },
     -- Custom Command
     {
       Name = "custom_command",
@@ -419,7 +386,7 @@ function GetControlLayout(props)
   }
   graphics[#graphics + 1] = {
     Type = "Text",
-    Text = "Connection Settings (Persistent)",
+    Text = "Connection Settings",
     Font = "Roboto",
     FontSize = 12,
     FontStyle = "Bold",
@@ -437,12 +404,11 @@ function GetControlLayout(props)
     HTextAlign = "Right"
   }
   
-  layout["host_display"] = {
-    PrettyName = "Host/IP Address (from Properties)",
+  layout["host"] = {
+    PrettyName = "Host/IP Address",
     Style = "Text",
     Position = {75, y_pos + 25},
-    Size = {150, 20},
-    IsReadOnly = true
+    Size = {150, 20}
   }
   
   graphics[#graphics + 1] = {
@@ -455,22 +421,28 @@ function GetControlLayout(props)
     HTextAlign = "Right"
   }
   
-  layout["port_display"] = {
-    PrettyName = "Port (from Properties)",
+  layout["port"] = {
+    PrettyName = "Port",
     Style = "Text",
     Position = {275, y_pos + 25},
-    Size = {60, 20},
-    IsReadOnly = true
+    Size = {60, 20}
   }
   
   graphics[#graphics + 1] = {
     Type = "Text",
-    Text = "Configure IP, Port, and Password in Plugin Properties →",
+    Text = "Password:",
     Font = "Roboto",
-    FontSize = 9,
-    FontStyle = "Italic",
-    Position = {10, y_pos + 50},
-    Size = {320, 16}
+    FontSize = 10,
+    Position = {10, y_pos + 53},
+    Size = {60, 16},
+    HTextAlign = "Right"
+  }
+  
+  layout["password"] = {
+    PrettyName = "Password",
+    Style = "Text",
+    Position = {75, y_pos + 50},
+    Size = {260, 20}
   }
   
   layout["connect"] = {
@@ -822,104 +794,8 @@ function GetControlLayout(props)
     Size = {100, 55}
   }
   
-  -- Command Selection Section
-  y_pos = 680
-  graphics[#graphics + 1] = {
-    Type = "GroupBox",
-    Fill = {102, 102, 102},
-    StrokeWidth = 1,
-    Position = {5, y_pos},
-    Size = {460, 120}
-  }
-  graphics[#graphics + 1] = {
-    Type = "Text",
-    Text = "Command Selection (ALL Commands)",
-    Font = "Roboto",
-    FontSize = 12,
-    FontStyle = "Bold",
-    Position = {10, y_pos + 5},
-    Size = {250, 16}
-  }
-  
-  graphics[#graphics + 1] = {
-    Type = "Text",
-    Text = "Command:",
-    Font = "Roboto",
-    FontSize = 10,
-    Position = {10, y_pos + 28},
-    Size = {70, 16},
-    HTextAlign = "Right"
-  }
-  
-  layout["command_dropdown"] = {
-    PrettyName = "Command Dropdown",
-    Style = "ComboBox",
-    Position = {85, y_pos + 25},
-    Size = {265, 20}
-  }
-  
-  graphics[#graphics + 1] = {
-    Type = "Text",
-    Text = "Param 1:",
-    Font = "Roboto",
-    FontSize = 10,
-    Position = {10, y_pos + 53},
-    Size = {70, 16},
-    HTextAlign = "Right"
-  }
-  
-  layout["dropdown_param1"] = {
-    PrettyName = "Parameter 1",
-    Style = "Text",
-    Position = {85, y_pos + 50},
-    Size = {265, 20}
-  }
-  
-  graphics[#graphics + 1] = {
-    Type = "Text",
-    Text = "Param 2:",
-    Font = "Roboto",
-    FontSize = 10,
-    Position = {10, y_pos + 78},
-    Size = {70, 16},
-    HTextAlign = "Right"
-  }
-  
-  layout["dropdown_param2"] = {
-    PrettyName = "Parameter 2",
-    Style = "Text",
-    Position = {85, y_pos + 75},
-    Size = {265, 20}
-  }
-  
-  graphics[#graphics + 1] = {
-    Type = "Text",
-    Text = "Param 3:",
-    Font = "Roboto",
-    FontSize = 10,
-    Position = {10, y_pos + 103},
-    Size = {70, 16},
-    HTextAlign = "Right"
-  }
-  
-  layout["dropdown_param3"] = {
-    PrettyName = "Parameter 3",
-    Style = "Text",
-    Position = {85, y_pos + 100},
-    Size = {265, 20}
-  }
-  
-  layout["execute_dropdown"] = {
-    PrettyName = "Execute Command",
-    Style = "Button",
-    Legend = "Execute",
-    Color = {0, 180, 255},
-    Position = {355, y_pos + 25},
-    Size = {100, 95}
-  }
-  
   -- Custom Command Section
-  y_pos = 810
+  y_pos = 680
   graphics[#graphics + 1] = {
     Type = "GroupBox",
     Fill = {102, 102, 102},
@@ -960,7 +836,7 @@ function GetControlLayout(props)
   }
   
   -- Command Buttons Section
-  y_pos = 910
+  y_pos = 780
   graphics[#graphics + 1] = {
     Type = "GroupBox",
     Fill = {102, 102, 102},
@@ -1005,7 +881,7 @@ function GetControlLayout(props)
   end
   
   -- Response Section
-  y_pos = 950 + (props["Command Buttons"].Value * 30)
+  y_pos = 820 + (props["Command Buttons"].Value * 30)
   graphics[#graphics + 1] = {
     Type = "GroupBox",
     Fill = {102, 102, 102},
@@ -1062,60 +938,26 @@ if Controls then
     return "{" .. table.concat(pairs_list, ",") .. "}"
   end
   
-  -- Variables - READ FROM PROPERTIES (PERSISTENT)
-  local host = Properties["IP Address"].Value
-  local port = Properties["Port"].Value
-  local password = Properties["Password"].Value
+  -- Variables - READ FROM CONTROLS (EDITABLE IN UI)
   local auto_reconnect = Properties["Auto Reconnect"].Value
   local debug = Properties["Debug"].Value
+  
+  -- Helper functions to get current connection settings from Controls
+  local function GetHost()
+    return Controls.host.String or "localhost"
+  end
+  
+  local function GetPort()
+    return tonumber(Controls.port.String) or 8810
+  end
+  
+  local function GetPassword()
+    return Controls.password.String or ""
+  end
   
   local is_connected = false
   local reconnect_timer = nil
   local keepalive_timer = nil
-  
-  -- Command dropdown choices and parameter mappings
-  local command_choices = {
-    "--- System ---",
-    "shutdown",
-    "shutdown_cancel",
-    "reboot",
-    "lock",
-    "getSystemInfo",
-    "--- Script ---",
-    "runScript",
-    "--- Input ---",
-    "sendInput",
-    "--- UI ---",
-    "sendAlert",
-    "getFonts",
-    "--- File ---",
-    "moveFile",
-    "moveDatedFileInFolder",
-    "moveDatedFileInFolderWithExtension",
-    "moveFileBasedOnSize",
-    "--- App ---",
-    "focusApp",
-    "quitApp"
-  }
-  
-  -- Map command to required parameters
-  local command_params = {
-    shutdown = {"time"},
-    shutdown_cancel = {},
-    reboot = {},
-    lock = {},
-    getSystemInfo = {},
-    runScript = {"scriptPath", "args", "stdin"},
-    sendInput = {"type", "key"},
-    sendAlert = {"message"},
-    getFonts = {},
-    moveFile = {"sourcePath", "destPath", "copyOnly"},
-    moveDatedFileInFolder = {"folder", "destination"},
-    moveDatedFileInFolderWithExtension = {"folder", "extension", "destination"},
-    moveFileBasedOnSize = {"folder", "size", "destination"},
-    focusApp = {"appName"},
-    quitApp = {"appName"}
-  }
   
   -- Helper Functions
   local function Debug(msg)
@@ -1131,8 +973,11 @@ if Controls then
   end
   
   function Connect()
+    local host = GetHost()
+    local port = GetPort()
+    
     if host == "" then
-      UpdateStatus(2, "Host/IP address required - Set in Properties")
+      UpdateStatus(2, "Host/IP address required")
       Controls.connect.Boolean = false
       return
     end
@@ -1247,7 +1092,11 @@ if Controls then
       return
     end
     
-    -- Add password to command (from Properties)
+    local host = GetHost()
+    local port = GetPort()
+    local password = GetPassword()
+    
+    -- Add password to command
     command_data.password = password
     
     local json_data = BuildJsonString(command_data)
@@ -1419,6 +1268,10 @@ if Controls then
       return
     end
     
+    local host = GetHost()
+    local port = GetPort()
+    local password = GetPassword()
+    
     -- If JSON provided, use it directly with password appended
     if json_str ~= "" and json_str:sub(1,1) == "{" then
       -- Trim whitespace and ensure it ends with }
@@ -1464,6 +1317,10 @@ if Controls then
         return
       end
       
+      local host = GetHost()
+      local port = GetPort()
+      local password = GetPassword()
+      
       if json_str:sub(1,1) == "{" then
         -- Trim whitespace and ensure it ends with }
         json_str = json_str:match("^%s*(.-)%s*$")
@@ -1499,75 +1356,17 @@ if Controls then
     end
   end
   
-  -- Command Dropdown Execution
-  Controls.execute_dropdown.EventHandler = function()
-    local selected_command = Controls.command_dropdown.String
-    
-    -- Skip if a category header is selected
-    if selected_command:sub(1, 3) == "---" then
-      UpdateStatus(2, "Please select a command, not a category")
-      return
-    end
-    
-    if selected_command == "" then
-      UpdateStatus(2, "Please select a command from the dropdown")
-      return
-    end
-    
-    -- Get parameter values
-    local param1 = Controls.dropdown_param1.String
-    local param2 = Controls.dropdown_param2.String
-    local param3 = Controls.dropdown_param3.String
-    
-    -- Build command data based on selected command
-    local cmd_data = { command = selected_command }
-    local params = command_params[selected_command] or {}
-    
-    -- Map parameters based on command requirements
-    if #params > 0 and param1 ~= "" then
-      -- Special handling for numeric parameters
-      if selected_command == "shutdown" then
-        cmd_data[params[1]] = tonumber(param1) or 1
-      else
-        cmd_data[params[1]] = param1
-      end
-    end
-    if #params > 1 and param2 ~= "" then
-      -- Special handling for numeric parameters
-      if selected_command == "moveFileBasedOnSize" then
-        cmd_data[params[2]] = tonumber(param2) or 0
-      elseif selected_command == "sendInput" then
-        cmd_data[params[2]] = param2
-      else
-        cmd_data[params[2]] = param2
-      end
-    end
-    if #params > 2 and param3 ~= "" then
-      -- Special handling for boolean parameters
-      if selected_command == "moveFile" then
-        cmd_data[params[3]] = (param3 == "true" or param3 == "1" or param3 == "yes")
-      else
-        cmd_data[params[3]] = param3
-      end
-    end
-    
-    SendCommand(cmd_data)
-  end
-  
   -- Initialize
   UpdateStatus(5, "Initialized - Ready to connect")
   
-  -- Display persistent settings from Properties
-  Controls.host_display.String = host
-  Controls.port_display.String = tostring(port)
+  -- Initialize connection fields with defaults
+  Controls.host.String = Properties["IP Address"].Value
+  Controls.port.String = tostring(Properties["Port"].Value)
+  Controls.password.String = Properties["Password"].Value
   
   -- Initialize other controls
   Controls.shutdown_time.String = "1"
   
-  -- Initialize command dropdown with choices
-  Controls.command_dropdown.Choices = command_choices
-  Controls.command_dropdown.String = ""
-  
   Debug("ScriptLauncher Control Plugin Initialized")
-  Debug("Host: " .. host .. ":" .. tostring(port))
+  Debug("Host: " .. GetHost() .. ":" .. tostring(GetPort()))
 end
