@@ -140,6 +140,7 @@ function GetControls(props)
       Name = "shutdown",
       ControlType = "Button",
       ButtonType = "Trigger",
+      PinStyle = "Both",
       Count = 1,
       UserPin = true
     },
@@ -154,6 +155,7 @@ function GetControls(props)
       Name = "reboot",
       ControlType = "Button",
       ButtonType = "Trigger",
+      PinStyle = "Both",
       Count = 1,
       UserPin = true
     },
@@ -161,6 +163,7 @@ function GetControls(props)
       Name = "lock",
       ControlType = "Button",
       ButtonType = "Trigger",
+      PinStyle = "Both",
       Count = 1,
       UserPin = true
     },
@@ -518,7 +521,7 @@ function GetControlLayout(props)
   }
   
   layout["shutdown"] = {
-    PrettyName = "Shutdown",
+    PrettyName = "Shutdown (Pin + Button)",
     Style = "Button",
     Legend = "Shutdown",
     Position = {10, y_pos + 25},
@@ -543,7 +546,7 @@ function GetControlLayout(props)
   }
   
   layout["reboot"] = {
-    PrettyName = "Reboot",
+    PrettyName = "Reboot (Pin + Button)",
     Style = "Button",
     Legend = "Reboot",
     Position = {235, y_pos + 25},
@@ -551,7 +554,7 @@ function GetControlLayout(props)
   }
   
   layout["lock"] = {
-    PrettyName = "Lock",
+    PrettyName = "Lock (Pin + Button)",
     Style = "Button",
     Legend = "Lock",
     Position = {320, y_pos + 25},
@@ -1078,6 +1081,64 @@ if Controls then
     return "{" .. table.concat(pairs_list, ",") .. "}"
   end
   
+  -- Parse and format response for display
+  local function ParseResponse(response_data)
+    if not response_data or response_data == "" then
+      return "No response"
+    end
+    
+    -- Try to parse as JSON
+    local success, parsed = pcall(function()
+      -- Simple JSON parsing for common response patterns
+      -- Check if it's already a simple string message
+      if not response_data:match("^{") then
+        return response_data
+      end
+      
+      -- Extract common fields from JSON responses
+      local message = response_data:match('"message"%s*:%s*"([^"]*)"')
+      local status = response_data:match('"status"%s*:%s*"([^"]*)"')
+      local success_flag = response_data:match('"success"%s*:%s*([^,}]*)')
+      local error_msg = response_data:match('"error"%s*:%s*"([^"]*)"')
+      
+      -- Build formatted output
+      local output = ""
+      
+      if message then
+        output = message
+      elseif status then
+        output = "Status: " .. status
+      elseif success_flag then
+        output = "Success: " .. success_flag
+      else
+        -- If we can't parse it nicely, return truncated raw data
+        if #response_data > 100 then
+          output = response_data:sub(1, 97) .. "..."
+        else
+          output = response_data
+        end
+      end
+      
+      -- Append error if present
+      if error_msg and error_msg ~= "" then
+        output = output .. " | Error: " .. error_msg
+      end
+      
+      return output
+    end)
+    
+    if success and parsed then
+      return parsed
+    else
+      -- If parsing fails, return truncated raw data
+      if #response_data > 100 then
+        return response_data:sub(1, 97) .. "..."
+      else
+        return response_data
+      end
+    end
+  end
+  
   -- Variables - READ FROM CONTROLS (EDITABLE IN UI)
   local auto_reconnect = Properties["Auto Reconnect"].Value
   local debug = Properties["Debug"].Value
@@ -1259,11 +1320,17 @@ if Controls then
       EventHandler = function(tbl, code, data, error, headers)
         if code == 200 then
           Debug("Command successful: " .. data)
-          Controls.last_response.String = data
+          
+          -- Parse and format the response for better readability
+          local formatted_response = ParseResponse(data)
+          Controls.last_response.String = formatted_response
         else
           local err_msg = error or "Unknown error"
           Debug("Command failed: " .. err_msg)
-          Controls.last_response.String = "Error: " .. err_msg
+          
+          -- Format error response
+          local formatted_error = "ERROR: " .. err_msg
+          Controls.last_response.String = formatted_error
           
           if code == 0 or code == nil then
             is_connected = false
