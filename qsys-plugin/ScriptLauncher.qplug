@@ -525,10 +525,20 @@ function GetControlLayout(props)
     Size = {80, 25}
   }
   
+  graphics[#graphics + 1] = {
+    Type = "Text",
+    Text = "Time (min):",
+    Font = "Roboto",
+    FontSize = 10,
+    Position = {95, y_pos + 28},
+    Size = {70, 16},
+    HTextAlign = "Right"
+  }
+  
   layout["shutdown_time"] = {
     PrettyName = "Shutdown Time (min)",
     Style = "Text",
-    Position = {95, y_pos + 25},
+    Position = {170, y_pos + 25},
     Size = {60, 25}
   }
   
@@ -536,7 +546,7 @@ function GetControlLayout(props)
     PrettyName = "Reboot",
     Style = "Button",
     Legend = "Reboot",
-    Position = {160, y_pos + 25},
+    Position = {235, y_pos + 25},
     Size = {80, 25}
   }
   
@@ -544,16 +554,16 @@ function GetControlLayout(props)
     PrettyName = "Lock",
     Style = "Button",
     Legend = "Lock",
-    Position = {245, y_pos + 25},
-    Size = {80, 25}
+    Position = {320, y_pos + 25},
+    Size = {65, 25}
   }
   
   layout["shutdown_cancel"] = {
     PrettyName = "Cancel Shutdown",
     Style = "Button",
     Legend = "Cancel",
-    Position = {330, y_pos + 25},
-    Size = {80, 25}
+    Position = {390, y_pos + 25},
+    Size = {65, 25}
   }
   
   layout["get_system_info"] = {
@@ -598,25 +608,55 @@ function GetControlLayout(props)
     Size = {150, 16}
   }
   
+  graphics[#graphics + 1] = {
+    Type = "Text",
+    Text = "Script Path:",
+    Font = "Roboto",
+    FontSize = 10,
+    Position = {10, y_pos + 28},
+    Size = {110, 16},
+    HTextAlign = "Right"
+  }
+  
   layout["script_path"] = {
     PrettyName = "Script Path",
     Style = "Text",
-    Position = {10, y_pos + 25},
-    Size = {340, 25}
+    Position = {125, y_pos + 25},
+    Size = {225, 25}
+  }
+  
+  graphics[#graphics + 1] = {
+    Type = "Text",
+    Text = "Arguments:",
+    Font = "Roboto",
+    FontSize = 10,
+    Position = {10, y_pos + 58},
+    Size = {110, 16},
+    HTextAlign = "Right"
   }
   
   layout["script_args"] = {
     PrettyName = "Arguments",
     Style = "Text",
-    Position = {10, y_pos + 55},
-    Size = {340, 25}
+    Position = {125, y_pos + 55},
+    Size = {225, 25}
+  }
+  
+  graphics[#graphics + 1] = {
+    Type = "Text",
+    Text = "Stdin:",
+    Font = "Roboto",
+    FontSize = 10,
+    Position = {10, y_pos + 88},
+    Size = {110, 16},
+    HTextAlign = "Right"
   }
   
   layout["script_stdin"] = {
     PrettyName = "Stdin",
     Style = "Text",
-    Position = {10, y_pos + 85},
-    Size = {340, 25}
+    Position = {125, y_pos + 85},
+    Size = {225, 25}
   }
   
   layout["run_script"] = {
@@ -646,11 +686,21 @@ function GetControlLayout(props)
     Size = {150, 16}
   }
   
+  graphics[#graphics + 1] = {
+    Type = "Text",
+    Text = "Message:",
+    Font = "Roboto",
+    FontSize = 10,
+    Position = {10, y_pos + 28},
+    Size = {110, 16},
+    HTextAlign = "Right"
+  }
+  
   layout["alert_message"] = {
     PrettyName = "Alert Message",
     Style = "Text",
-    Position = {10, y_pos + 25},
-    Size = {340, 25}
+    Position = {125, y_pos + 25},
+    Size = {225, 25}
   }
   
   layout["send_alert"] = {
@@ -680,27 +730,37 @@ function GetControlLayout(props)
     Size = {150, 16}
   }
   
+  graphics[#graphics + 1] = {
+    Type = "Text",
+    Text = "App Name:",
+    Font = "Roboto",
+    FontSize = 10,
+    Position = {10, y_pos + 28},
+    Size = {110, 16},
+    HTextAlign = "Right"
+  }
+  
   layout["app_name"] = {
     PrettyName = "App Name",
     Style = "Text",
-    Position = {10, y_pos + 25},
-    Size = {200, 25}
+    Position = {125, y_pos + 25},
+    Size = {160, 25}
   }
   
   layout["focus_app"] = {
     PrettyName = "Focus App",
     Style = "Button",
     Legend = "Focus",
-    Position = {215, y_pos + 25},
-    Size = {70, 25}
+    Position = {290, y_pos + 25},
+    Size = {80, 25}
   }
   
   layout["quit_app"] = {
     PrettyName = "Quit App",
     Style = "Button",
     Legend = "Quit",
-    Position = {290, y_pos + 25},
-    Size = {70, 25}
+    Position = {375, y_pos + 25},
+    Size = {80, 25}
   }
   
   -- Input Commands Section
@@ -722,25 +782,45 @@ function GetControlLayout(props)
     Size = {150, 16}
   }
   
+  graphics[#graphics + 1] = {
+    Type = "Text",
+    Text = "Input Type:",
+    Font = "Roboto",
+    FontSize = 10,
+    Position = {10, y_pos + 28},
+    Size = {80, 16},
+    HTextAlign = "Right"
+  }
+  
   layout["input_type"] = {
     PrettyName = "Input Type",
     Style = "Text",
-    Position = {10, y_pos + 25},
-    Size = {100, 25}
+    Position = {95, y_pos + 25},
+    Size = {80, 25}
+  }
+  
+  graphics[#graphics + 1] = {
+    Type = "Text",
+    Text = "Key/Button:",
+    Font = "Roboto",
+    FontSize = 10,
+    Position = {180, y_pos + 28},
+    Size = {80, 16},
+    HTextAlign = "Right"
   }
   
   layout["input_key"] = {
     PrettyName = "Key/Button",
     Style = "Text",
-    Position = {115, y_pos + 25},
-    Size = {140, 25}
+    Position = {265, y_pos + 25},
+    Size = {85, 25}
   }
   
   layout["send_input"] = {
     PrettyName = "Send Input",
     Style = "Button",
     Legend = "Send",
-    Position = {260, y_pos + 25},
+    Position = {355, y_pos + 25},
     Size = {100, 25}
   }
   
@@ -763,18 +843,38 @@ function GetControlLayout(props)
     Size = {150, 16}
   }
   
+  graphics[#graphics + 1] = {
+    Type = "Text",
+    Text = "Source:",
+    Font = "Roboto",
+    FontSize = 10,
+    Position = {10, y_pos + 28},
+    Size = {110, 16},
+    HTextAlign = "Right"
+  }
+  
   layout["file_source"] = {
     PrettyName = "Source Path",
     Style = "Text",
-    Position = {10, y_pos + 25},
-    Size = {340, 25}
+    Position = {125, y_pos + 25},
+    Size = {225, 25}
+  }
+  
+  graphics[#graphics + 1] = {
+    Type = "Text",
+    Text = "Destination:",
+    Font = "Roboto",
+    FontSize = 10,
+    Position = {10, y_pos + 58},
+    Size = {110, 16},
+    HTextAlign = "Right"
   }
   
   layout["file_dest"] = {
     PrettyName = "Destination Path",
     Style = "Text",
-    Position = {10, y_pos + 55},
-    Size = {240, 25}
+    Position = {125, y_pos + 55},
+    Size = {150, 25}
   }
   
   layout["file_copy_only"] = {
@@ -782,8 +882,8 @@ function GetControlLayout(props)
     Style = "Button",
     Legend = "Copy",
     ButtonType = "Toggle",
-    Position = {255, y_pos + 55},
-    Size = {50, 25}
+    Position = {280, y_pos + 55},
+    Size = {70, 25}
   }
   
   layout["move_file"] = {
@@ -813,18 +913,38 @@ function GetControlLayout(props)
     Size = {150, 16}
   }
   
+  graphics[#graphics + 1] = {
+    Type = "Text",
+    Text = "Command:",
+    Font = "Roboto",
+    FontSize = 10,
+    Position = {10, y_pos + 28},
+    Size = {110, 16},
+    HTextAlign = "Right"
+  }
+  
   layout["custom_command"] = {
     PrettyName = "Command",
     Style = "Text",
-    Position = {10, y_pos + 25},
-    Size = {340, 25}
+    Position = {125, y_pos + 25},
+    Size = {225, 25}
+  }
+  
+  graphics[#graphics + 1] = {
+    Type = "Text",
+    Text = "JSON Params:",
+    Font = "Roboto",
+    FontSize = 10,
+    Position = {10, y_pos + 58},
+    Size = {110, 16},
+    HTextAlign = "Right"
   }
   
   layout["custom_json"] = {
     PrettyName = "JSON Parameters",
     Style = "Text",
-    Position = {10, y_pos + 55},
-    Size = {340, 25}
+    Position = {125, y_pos + 55},
+    Size = {225, 25}
   }
   
   layout["send_custom"] = {
@@ -865,18 +985,38 @@ function GetControlLayout(props)
       Size = {60, 25}
     }
     
+    graphics[#graphics + 1] = {
+      Type = "Text",
+      Text = "Name:",
+      Font = "Roboto",
+      FontSize = 10,
+      Position = {75, button_y + 3},
+      Size = {50, 16},
+      HTextAlign = "Right"
+    }
+    
     layout["cmd_" .. i .. "_name"] = {
       PrettyName = "Name " .. i,
       Style = "Text",
-      Position = {75, button_y},
-      Size = {150, 25}
+      Position = {130, button_y},
+      Size = {100, 25}
+    }
+    
+    graphics[#graphics + 1] = {
+      Type = "Text",
+      Text = "JSON:",
+      Font = "Roboto",
+      FontSize = 10,
+      Position = {235, button_y + 3},
+      Size = {45, 16},
+      HTextAlign = "Right"
     }
     
     layout["cmd_" .. i .. "_json"] = {
       PrettyName = "JSON " .. i,
       Style = "Text",
-      Position = {230, button_y},
-      Size = {225, 25}
+      Position = {285, button_y},
+      Size = {170, 25}
     }
   end
   
