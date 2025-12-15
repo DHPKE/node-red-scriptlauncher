@@ -1503,9 +1503,13 @@ if Controls then
         Timeout = 10,
         EventHandler = function(tbl, code, data, error, headers)
           if code == 200 then
-            Controls.last_response.String = data
+            -- Parse and format the response for better readability
+            local formatted_response = ParseResponse(data)
+            Controls.last_response.String = formatted_response
           else
-            Controls.last_response.String = "Error: " .. (error or "Unknown")
+            -- Format error response
+            local formatted_error = "ERROR: " .. (error or "Unknown error")
+            Controls.last_response.String = formatted_error
           end
         end
       }
@@ -1551,9 +1555,13 @@ if Controls then
           Timeout = 10,
           EventHandler = function(tbl, code, data, error, headers)
             if code == 200 then
-              Controls.last_response.String = data
+              -- Parse and format the response for better readability
+              local formatted_response = ParseResponse(data)
+              Controls.last_response.String = formatted_response
             else
-              Controls.last_response.String = "Error: " .. (error or "Unknown")
+              -- Format error response
+              local formatted_error = "ERROR: " .. (error or "Unknown error")
+              Controls.last_response.String = formatted_error
             end
           end
         }
