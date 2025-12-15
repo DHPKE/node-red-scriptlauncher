@@ -27,11 +27,12 @@ You can also override the command and shutdown time dynamically by setting msg.c
 
 ### Q-SYS Designer Plugin
 
-A comprehensive Q-SYS Designer plugin (.qplug) that provides complete control over ScriptLauncher with support for ALL commands.
+A comprehensive Q-SYS Designer plugin (.qplug) that provides complete control over ScriptLauncher with support for ALL commands and **persistent connection settings**.
 
-**Features:**
-- Complete support for all ScriptLauncher command categories (System, Script, Input, UI, File, App)
-- **NEW: Command Selection dropdown** - Unified interface with all 20 commands in a single dropdown menu
+**Version 2.0 - NEW Features:**
+- **✅ PERSISTENT CONNECTION SETTINGS** - IP Address, Port, and Password are saved with the design file using Q-SYS Properties
+- Complete support for all 16 ScriptLauncher command categories (System, Script, Input, UI, File, App)
+- **Command Selection dropdown** - Unified interface with all commands in a single dropdown menu
 - REST API integration using HTTP POST requests
 - Dynamic parameter configuration based on command type
 - Real-time status indicators
@@ -42,7 +43,8 @@ A comprehensive Q-SYS Designer plugin (.qplug) that provides complete control ov
 
 **Installation:**
 
-1. Download `scriptlauncher-control_Version8.qplug`
+1. Download `qsys-plugin/ScriptLauncher.qplug` (Version 2.0 - Persistent Settings)
+   - Or use legacy: `scriptlauncher-control_Version8.qplug` (Version 1.0 - Non-persistent)
 2. In Q-SYS Designer, go to Tools > Show Design Resources
 3. Right-click on "Plugins" and select "Import Plugin"
 4. Select the downloaded .qplug file
@@ -50,13 +52,15 @@ A comprehensive Q-SYS Designer plugin (.qplug) that provides complete control ov
 
 **Quick Start:**
 
-1. Configure connection settings (Host/IP, Port, Password)
-2. Click Connect button
-3. Use the new **Command Selection** dropdown to select any command
-4. Fill in required parameters
-5. Click Execute
+1. **Right-click the plugin and select "Properties"**
+2. Configure persistent settings: IP Address, Port (default: 8810), Password
+3. Click OK to save (settings are persistent!)
+4. Click Connect button in the plugin UI
+5. Use the **Command Selection** dropdown to select any command
+6. Fill in required parameters
+7. Click Execute
 
-For detailed usage instructions, see [COMMAND_SELECTION_GUIDE.md](COMMAND_SELECTION_GUIDE.md)
+For detailed usage instructions, see [qsys-plugin/README.md](qsys-plugin/README.md) or [COMMAND_SELECTION_GUIDE.md](COMMAND_SELECTION_GUIDE.md)
 
 **Supported Commands:**
 - System: shutdown, shutdown_cancel, reboot, lock, getSystemInfo
