@@ -256,13 +256,16 @@ function GetControlLayout(props)
   local layout = {}
   local graphics = {}
   
+  -- UI color constants
+  local BACKGROUND_COLOR = { 240, 240, 240 }
+  
   -- Title
   table.insert(graphics, {
     Type = "GroupBox",
-    Fill = { 240, 240, 240 },
+    Fill = BACKGROUND_COLOR,
     StrokeWidth = 1,
     Position = { 0, 0 },
-    Size = { 400, 580 }
+    Size = { 400, 610 }
   })
   
   table.insert(graphics, {
@@ -482,7 +485,14 @@ end
 -- Runtime script
 if Controls then
   -- Load required libraries
-  local rapidjson = require("rapidjson")
+  local rapidjson
+  local json_available = pcall(function()
+    rapidjson = require("rapidjson")
+  end)
+  
+  if not json_available then
+    print("ERROR: rapidjson library not available. Plugin cannot function.")
+  end
   
   -- Status constants
   local STATUS_OK = 0
@@ -491,6 +501,10 @@ if Controls then
   local STATUS_NOT_PRESENT = 3
   local STATUS_MISSING = 4
   local STATUS_INITIALIZING = 5
+  
+  -- Configuration constants
+  local HTTP_TIMEOUT = 30
+  local DEFAULT_SHUTDOWN_TIME = 1  -- Default shutdown delay in minutes
   
   -- Initialize controls with default values
   Controls.host.String = Properties["Host"].Value
@@ -538,7 +552,7 @@ if Controls then
     if command == "shutdown" then
       local time = Controls.time.String
       if time ~= "" then
-        payload.time = tonumber(time) or 1
+        payload.time = tonumber(time) or DEFAULT_SHUTDOWN_TIME
       end
     
     -- Script Commands
@@ -582,7 +596,11 @@ if Controls then
       payload.sourceFolderPath = Controls.sourceFolderPath.String
       payload.destFolderPathLarger = Controls.destFolderPathLarger.String
       payload.destFolderPathSmaller = Controls.destFolderPathSmaller.String
-      payload.sizeThreshold = tonumber(Controls.sizeThreshold.String) or 0
+      -- Require explicit size threshold - no default to avoid unexpected behavior
+      local threshold = Controls.sizeThreshold.String
+      if threshold ~= "" then
+        payload.sizeThreshold = tonumber(threshold)
+      end
       payload.fileExtension = Controls.fileExtension.String
       payload.fileName = Controls.fileName.String
       payload.copyOnly = Controls.copyOnly.Boolean
@@ -610,7 +628,7 @@ if Controls then
         ["Content-Type"] = "application/json"
       },
       Data = jsonPayload,
-      Timeout = 30,
+      Timeout = HTTP_TIMEOUT,
       EventHandler = function(tbl, code, data, err, headers)
         if code == 200 then
           -- Success
