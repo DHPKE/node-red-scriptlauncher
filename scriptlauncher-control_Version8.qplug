@@ -224,6 +224,43 @@ function GetControls(props)
       Count = 1,
       UserPin = true
     },
+    -- Command Selection Dropdown
+    {
+      Name = "command_dropdown",
+      ControlType = "Text",
+      ControlUnit = "Combo",
+      PinStyle = "Input",
+      Count = 1,
+      UserPin = true
+    },
+    {
+      Name = "dropdown_param1",
+      ControlType = "Text",
+      PinStyle = "Input",
+      Count = 1,
+      UserPin = true
+    },
+    {
+      Name = "dropdown_param2",
+      ControlType = "Text",
+      PinStyle = "Input",
+      Count = 1,
+      UserPin = true
+    },
+    {
+      Name = "dropdown_param3",
+      ControlType = "Text",
+      PinStyle = "Input",
+      Count = 1,
+      UserPin = true
+    },
+    {
+      Name = "execute_dropdown",
+      ControlType = "Button",
+      ButtonType = "Trigger",
+      Count = 1,
+      UserPin = true
+    },
     -- Custom Command
     {
       Name = "custom_command",
@@ -594,8 +631,104 @@ function GetControlLayout(props)
     Size = {70, 25}
   }
   
-  -- Custom Command Section
+  -- Command Selection Section
   y_pos = 485
+  graphics[#graphics + 1] = {
+    Type = "GroupBox",
+    Fill = {102, 102, 102},
+    StrokeWidth = 1,
+    Position = {5, y_pos},
+    Size = {460, 120}
+  }
+  graphics[#graphics + 1] = {
+    Type = "Text",
+    Text = "Command Selection",
+    Font = "Roboto",
+    FontSize = 12,
+    FontStyle = "Bold",
+    Position = {10, y_pos + 5},
+    Size = {150, 16}
+  }
+  
+  graphics[#graphics + 1] = {
+    Type = "Text",
+    Text = "Command:",
+    Font = "Roboto",
+    FontSize = 10,
+    Position = {10, y_pos + 28},
+    Size = {70, 16},
+    HTextAlign = "Right"
+  }
+  
+  layout["command_dropdown"] = {
+    PrettyName = "Command Dropdown",
+    Style = "ComboBox",
+    Position = {85, y_pos + 25},
+    Size = {265, 20}
+  }
+  
+  graphics[#graphics + 1] = {
+    Type = "Text",
+    Text = "Param 1:",
+    Font = "Roboto",
+    FontSize = 10,
+    Position = {10, y_pos + 53},
+    Size = {70, 16},
+    HTextAlign = "Right"
+  }
+  
+  layout["dropdown_param1"] = {
+    PrettyName = "Parameter 1",
+    Style = "Text",
+    Position = {85, y_pos + 50},
+    Size = {265, 20}
+  }
+  
+  graphics[#graphics + 1] = {
+    Type = "Text",
+    Text = "Param 2:",
+    Font = "Roboto",
+    FontSize = 10,
+    Position = {10, y_pos + 78},
+    Size = {70, 16},
+    HTextAlign = "Right"
+  }
+  
+  layout["dropdown_param2"] = {
+    PrettyName = "Parameter 2",
+    Style = "Text",
+    Position = {85, y_pos + 75},
+    Size = {265, 20}
+  }
+  
+  graphics[#graphics + 1] = {
+    Type = "Text",
+    Text = "Param 3:",
+    Font = "Roboto",
+    FontSize = 10,
+    Position = {10, y_pos + 103},
+    Size = {70, 16},
+    HTextAlign = "Right"
+  }
+  
+  layout["dropdown_param3"] = {
+    PrettyName = "Parameter 3",
+    Style = "Text",
+    Position = {85, y_pos + 100},
+    Size = {265, 20}
+  }
+  
+  layout["execute_dropdown"] = {
+    PrettyName = "Execute Command",
+    Style = "Button",
+    Legend = "Execute",
+    Color = {0, 180, 255},
+    Position = {355, y_pos + 25},
+    Size = {100, 95}
+  }
+  
+  -- Custom Command Section
+  y_pos = 615
   graphics[#graphics + 1] = {
     Type = "GroupBox",
     Fill = {102, 102, 102},
@@ -636,7 +769,7 @@ function GetControlLayout(props)
   }
   
   -- Command Buttons Section
-  y_pos = 585
+  y_pos = 715
   graphics[#graphics + 1] = {
     Type = "GroupBox",
     Fill = {102, 102, 102},
@@ -681,7 +814,7 @@ function GetControlLayout(props)
   end
   
   -- Response Section
-  y_pos = 625 + (props["Command Buttons"]. Value * 30)
+  y_pos = 755 + (props["Command Buttons"]. Value * 30)
   graphics[#graphics + 1] = {
     Type = "GroupBox",
     Fill = {102, 102, 102},
@@ -738,6 +871,50 @@ if Controls then
   local is_connected = false
   local reconnect_timer = nil
   local keepalive_timer = nil
+  
+  -- Command dropdown choices and parameter mappings
+  local command_choices = {
+    "--- System ---",
+    "shutdown",
+    "shutdown_cancel",
+    "reboot",
+    "lock",
+    "getSystemInfo",
+    "--- Script ---",
+    "runScript",
+    "--- Input ---",
+    "sendInput",
+    "--- UI ---",
+    "sendAlert",
+    "getFonts",
+    "--- File ---",
+    "moveFile",
+    "moveDatedFileInFolder",
+    "moveDatedFileInFolderWithExtension",
+    "moveFileBasedOnSize",
+    "--- App ---",
+    "focusApp",
+    "quitApp"
+  }
+  
+  -- Map command to required parameters
+  local command_params = {
+    shutdown = {"time"},
+    shutdown_cancel = {},
+    reboot = {},
+    lock = {},
+    getSystemInfo = {},
+    runScript = {"scriptPath", "args"},
+    sendInput = {"input"},
+    sendAlert = {"message"},
+    getFonts = {},
+    moveFile = {"source", "destination"},
+    moveDatedFileInFolder = {"folder", "destination"},
+    moveDatedFileInFolderWithExtension = {"folder", "extension", "destination"},
+    moveFileBasedOnSize = {"folder", "size", "destination"},
+    focusApp = {"appName"},
+    quitApp = {"appName"}
+  }
   
   -- Helper Functions
   local function Debug(msg)
@@ -1097,11 +1274,61 @@ if Controls then
     end
   end
   
+  -- Command Dropdown Execution
+  Controls.execute_dropdown.EventHandler = function()
+    local selected_command = Controls.command_dropdown.String
+    
+    -- Skip if a category header is selected
+    if selected_command:sub(1, 3) == "---" then
+      UpdateStatus(2, "Please select a command, not a category")
+      return
+    end
+    
+    if selected_command == "" then
+      UpdateStatus(2, "Please select a command from the dropdown")
+      return
+    end
+    
+    -- Get parameter values
+    local param1 = Controls.dropdown_param1.String
+    local param2 = Controls.dropdown_param2.String
+    local param3 = Controls.dropdown_param3.String
+    
+    -- Build command data based on selected command
+    local cmd_data = { command = selected_command }
+    local params = command_params[selected_command] or {}
+    
+    -- Map parameters based on command requirements
+    if #params > 0 and param1 ~= "" then
+      cmd_data[params[1]] = param1
+    end
+    if #params > 1 and param2 ~= "" then
+      cmd_data[params[2]] = param2
+    end
+    if #params > 2 and param3 ~= "" then
+      cmd_data[params[3]] = param3
+    end
+    
+    -- Special handling for numeric parameters
+    if selected_command == "shutdown" and param1 ~= "" then
+      cmd_data.time = tonumber(param1) or 1
+    elseif selected_command == "moveFileBasedOnSize" and param2 ~= "" then
+      cmd_data.size = tonumber(param2) or 0
+    end
+    
+    SendCommand(cmd_data)
+  end
+  
   -- Initialize
   UpdateStatus(5, "Initialized - Ready to connect")
   Controls.host.String = "192.168.1.100"
   Controls.port.String = "8810"
   Controls.password.String = ""
   Controls.shutdown_time.String = "1"
+  
+  -- Initialize command dropdown with choices
+  Controls.command_dropdown.Choices = command_choices
+  Controls.command_dropdown.String = command_choices[1]
+  
   Debug("ScriptLauncher Control Plugin Initialized")
 end
