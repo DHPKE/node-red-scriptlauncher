@@ -187,6 +187,32 @@ Controls.script_args.String = "--daily"
 Controls.run_script:Trigger()
 ```
 
+### System Command Input Pins
+
+The following system commands can now be triggered via input pins (PinStyle = "Both"):
+- **shutdown** - Trigger pin to initiate shutdown (uses shutdown_time parameter)
+- **reboot** - Trigger pin to initiate reboot
+- **lock** - Trigger pin to lock the system
+
+These pins can be connected to other Q-SYS components (buttons, logic, triggers, etc.) to automate system commands.
+
+**Example Use Cases:**
+- Connect a wall-mount button to the shutdown pin for emergency shutdown
+- Use a scheduled trigger to reboot systems at specific times
+- Lock workstations automatically when a room is vacated (using occupancy sensors)
+
+**Pin Triggering:**
+```lua
+-- Trigger shutdown with current shutdown_time value
+Controls.shutdown:Trigger()
+
+-- Trigger immediate reboot
+Controls.reboot:Trigger()
+
+-- Trigger system lock
+Controls.lock:Trigger()
+```
+
 ## API Communication
 
 The plugin uses ScriptLauncher's REST API:
